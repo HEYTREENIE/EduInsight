@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KOTRA 교육 만족도 누적 분석</title>
+<meta name="description" content="aSSIST × KOTRA 교육과정 만족도 설문을 누적해 과정·영역·반복 이슈를 비교하는 대시보드">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+:root{
+  --font-anthropic-sans:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-anthropic-serif:"Noto Serif KR","Apple SD Gothic Neo",serif;
+  --color-bg:#faf9f6;--color-panel:#ffffff;--color-fg:#1f1e1c;--color-fg-muted:#6b6862;--color-border-line:#e6e3dc;
+  --color-bad:#c2410c;--color-warn:#a16207;--color-ok:#15803d;
+  --cds-chart-grid:#ece9e2;--cds-chart-axis:#cfcac0;--cds-chart-reference:#9a958b;--cds-chart-muted:#cdc8be;--cds-chart-status-critical:#d64545;
+  --cds-surface-popover:#ffffff;--cds-border:#e2ded6;--cds-shadow-popover:0 6px 20px rgba(0,0,0,.08);--cds-text-secondary:#6b6862;
+  --cds-font-size-caption:.8125rem;--cds-font-size-body:.9375rem;--cds-font-size-heading:1.0625rem;--cds-font-size-title:2rem;--cds-font-weight-medium:600;
+  --cds-gap-xs:.25rem;--cds-gap-sm:.5rem;--cds-gap-md:1rem;--cds-gap-lg:1.5rem;--cds-gap-xl:2rem;
+  --cds-pad-xs:.25rem;--cds-pad-sm:.5rem;--cds-pad-md:.75rem;--cds-pad-lg:1.25rem;--cds-radius:10px;--cds-dur-slow:.4s;
+}
+@media (prefers-color-scheme: dark){:root{
+  --color-bg:#161615;--color-panel:#1f1f1d;--color-fg:#ecebe7;--color-fg-muted:#a29e96;--color-border-line:#33322f;
+  --color-bad:#f08a6a;--color-warn:#e3b341;--color-ok:#5bc27f;
+  --cds-chart-grid:#2c2b28;--cds-chart-axis:#45433f;--cds-chart-reference:#7d7970;--cds-chart-muted:#55524c;--cds-chart-status-critical:#ef6b6b;
+  --cds-surface-popover:#262624;--cds-border:#3a3936;--cds-shadow-popover:0 6px 20px rgba(0,0,0,.4);--cds-text-secondary:#a29e96;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-fg);font-family:var(--font-anthropic-sans);-webkit-font-smoothing:antialiased}
+#dash-root{max-width:76rem;margin:0 auto;padding:clamp(16px,4vw,40px)}
+.dash-skeleton{position:relative;color:transparent!important}
+.dash-skeleton:empty,div.dash-skeleton,ul.dash-skeleton{background:linear-gradient(90deg,var(--color-border-line),transparent 60%);border-radius:6px;opacity:.6}
+span.dash-skeleton{display:inline-block;min-width:2em;background:var(--color-border-line);border-radius:4px}
+.site-foot{max-width:76rem;margin:0 auto;padding:0 clamp(16px,4vw,40px) 40px;color:var(--color-fg-muted);font-size:.8125rem;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="dash-root">
+<script id="kx-data" type="application/json">{"courses": [{"course_id": "japan", "course": "일본 시장 진출 과정", "short": "일본", "program": "일본 시장 진출", "category": "국가별 해외시장 진출", "date": "2026.03.11", "start": "2026-03-11", "period": "2026 상반기", "participants": 33, "respondents": 22, "index10": 7.82, "source": "Typeform 응답 요약 (엑셀 취합본으로 인원·기업 규모 보완)"}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "short": "인도네시아", "program": "인도네시아 시장 진출", "category": "국가별 해외시장 진출", "date": "2026.04.01", "start": "2026-04-01", "period": "2026 상반기", "participants": 17, "respondents": 13, "index10": 8.23, "source": "Typeform 응답 요약 (엑셀 취합본으로 인원·기업 규모 보완)"}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "short": "글로벌 세일즈①", "program": "글로벌 세일즈 역량 향상", "category": "글로벌 비즈니스", "date": "2026.04.08–09", "start": "2026-04-08", "period": "2026 상반기", "participants": 25, "respondents": 17, "index10": 8.76, "source": "만족도 평가 취합본 엑셀"}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "short": "수출 첫걸음", "program": "수출 첫 걸음", "category": "글로벌 비즈니스", "date": "2026.05.20", "start": "2026-05-20", "period": "2026 상반기", "participants": 33, "respondents": 28, "index10": 8.5, "source": "만족도 평가 취합본 엑셀"}, {"course_id": "usa", "course": "미국시장 진출 과정", "short": "미국", "program": "미국시장 진출", "category": "국가별 해외시장 진출", "date": "2026.06.10", "start": "2026-06-10", "period": "2026 상반기", "participants": 15, "respondents": 12, "index10": 9.08, "source": "만족도 평가 취합본 엑셀"}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "short": "해외전시①", "program": "해외전시 마케팅", "category": "글로벌 비즈니스", "date": "2026.06.11–12", "start": "2026-06-11", "period": "2026 상반기", "participants": 30, "respondents": 27, "index10": 8.59, "source": "만족도 평가 취합본 엑셀"}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "short": "베트남", "program": "베트남 시장 진출", "category": "국가별 해외시장 진출", "date": "2026.07.29", "start": "2026-07-29", "period": "2026 하반기", "participants": 13, "respondents": 11, "index10": 7.91, "source": "만족도 평가 취합본 엑셀"}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "short": "글로벌 세일즈②", "program": "글로벌 세일즈 역량 향상", "category": "글로벌 비즈니스", "date": "2026.08.26–27", "start": "2026-08-26", "period": "2026 하반기", "participants": 22, "respondents": 17, "index10": 8.76, "source": "만족도 평가 취합본 엑셀"}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "short": "해외전시②", "program": "해외전시 마케팅", "category": "글로벌 비즈니스", "date": "2026.09.16–17", "start": "2026-09-16", "period": "2026 하반기", "participants": 19, "respondents": 16, "index10": 8.56, "source": "만족도 평가 취합본 엑셀"}, {"course_id": "india", "course": "인도 시장 진출 과정", "short": "인도", "program": "인도 시장 진출", "category": "국가별 해외시장 진출", "date": "2026.09.29", "start": "2026-09-29", "period": "2026 하반기", "participants": 15, "respondents": 8, "index10": 8.88, "source": "만족도 평가 취합본 엑셀"}], "items": [{"course_id": "japan", "course": "일본 시장 진출 과정", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 4.27, "n1": 1, "n2": 0, "n3": 2, "n4": 8, "n5": 11}, {"course_id": "japan", "course": "일본 시장 진출 과정", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.0, "n1": 1, "n2": 2, "n3": 2, "n4": 8, "n5": 9}, {"course_id": "japan", "course": "일본 시장 진출 과정", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.14, "n1": 1, "n2": 0, "n3": 4, "n4": 7, "n5": 10}, {"course_id": "japan", "course": "일본 시장 진출 과정", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 4.09, "n1": 0, "n2": 1, "n3": 5, "n4": 7, "n5": 9}, {"course_id": "japan", "course": "일본 시장 진출 과정", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.14, "n1": 1, "n2": 1, "n3": 1, "n4": 10, "n5": 9}, {"course_id": "japan", "course": "일본 시장 진출 과정", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.27, "n1": 0, "n2": 2, "n3": 1, "n4": 8, "n5": 11}, {"course_id": "japan", "course": "일본 시장 진출 과정", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.23, "n1": 0, "n2": 1, "n3": 2, "n4": 10, "n5": 9}, {"course_id": "japan", "course": "일본 시장 진출 과정", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.09, "n1": 1, "n2": 1, "n3": 2, "n4": 9, "n5": 9}, {"course_id": "japan", "course": "일본 시장 진출 과정", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 4.05, "n1": 1, "n2": 2, "n3": 1, "n4": 9, "n5": 9}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 4.23, "n1": 0, "n2": 0, "n3": 2, "n4": 6, "n5": 5}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.08, "n1": 0, "n2": 0, "n3": 2, "n4": 8, "n5": 3}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.23, "n1": 0, "n2": 0, "n3": 2, "n4": 6, "n5": 5}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 3.92, "n1": 0, "n2": 1, "n3": 2, "n4": 7, "n5": 3}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.15, "n1": 0, "n2": 0, "n3": 2, "n4": 7, "n5": 4}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.15, "n1": 0, "n2": 1, "n3": 0, "n4": 8, "n5": 4}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.38, "n1": 0, "n2": 0, "n3": 0, "n4": 8, "n5": 5}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.31, "n1": 0, "n2": 0, "n3": 1, "n4": 7, "n5": 5}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 4.15, "n1": 0, "n2": 0, "n3": 3, "n4": 5, "n5": 5}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 4.53, "n1": 0, "n2": 0, "n3": 1, "n4": 6, "n5": 10}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.53, "n1": 0, "n2": 0, "n3": 1, "n4": 6, "n5": 10}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.47, "n1": 0, "n2": 0, "n3": 0, "n4": 9, "n5": 8}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 4.29, "n1": 0, "n2": 1, "n3": 1, "n4": 7, "n5": 8}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.76, "n1": 0, "n2": 0, "n3": 0, "n4": 4, "n5": 13}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.76, "n1": 0, "n2": 0, "n3": 0, "n4": 4, "n5": 13}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.53, "n1": 0, "n2": 0, "n3": 2, "n4": 4, "n5": 11}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.59, "n1": 0, "n2": 0, "n3": 1, "n4": 5, "n5": 11}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 4.59, "n1": 0, "n2": 0, "n3": 1, "n4": 5, "n5": 11}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 4.46, "n1": 0, "n2": 0, "n3": 5, "n4": 5, "n5": 18}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.57, "n1": 0, "n2": 0, "n3": 2, "n4": 8, "n5": 18}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.39, "n1": 0, "n2": 1, "n3": 4, "n4": 6, "n5": 17}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 4.32, "n1": 0, "n2": 1, "n3": 3, "n4": 10, "n5": 14}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.46, "n1": 0, "n2": 0, "n3": 2, "n4": 11, "n5": 15}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.64, "n1": 0, "n2": 0, "n3": 1, "n4": 8, "n5": 19}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.36, "n1": 0, "n2": 0, "n3": 7, "n4": 4, "n5": 17}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.39, "n1": 0, "n2": 0, "n3": 5, "n4": 7, "n5": 16}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 4.29, "n1": 0, "n2": 2, "n3": 3, "n4": 8, "n5": 15}, {"course_id": "usa", "course": "미국시장 진출 과정", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 4.58, "n1": 0, "n2": 0, "n3": 1, "n4": 3, "n5": 8}, {"course_id": "usa", "course": "미국시장 진출 과정", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.67, "n1": 0, "n2": 0, "n3": 0, "n4": 4, "n5": 8}, {"course_id": "usa", "course": "미국시장 진출 과정", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.75, "n1": 0, "n2": 0, "n3": 0, "n4": 3, "n5": 9}, {"course_id": "usa", "course": "미국시장 진출 과정", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 4.75, "n1": 0, "n2": 0, "n3": 0, "n4": 3, "n5": 9}, {"course_id": "usa", "course": "미국시장 진출 과정", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.42, "n1": 0, "n2": 1, "n3": 1, "n4": 2, "n5": 8}, {"course_id": "usa", "course": "미국시장 진출 과정", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.67, "n1": 0, "n2": 0, "n3": 0, "n4": 4, "n5": 8}, {"course_id": "usa", "course": "미국시장 진출 과정", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.58, "n1": 0, "n2": 0, "n3": 1, "n4": 3, "n5": 8}, {"course_id": "usa", "course": "미국시장 진출 과정", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.5, "n1": 0, "n2": 0, "n3": 1, "n4": 4, "n5": 7}, {"course_id": "usa", "course": "미국시장 진출 과정", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 4.58, "n1": 0, "n2": 0, "n3": 1, "n4": 3, "n5": 8}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 4.63, "n1": 0, "n2": 0, "n3": 1, "n4": 8, "n5": 18}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.48, "n1": 0, "n2": 0, "n3": 2, "n4": 10, "n5": 15}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.56, "n1": 0, "n2": 0, "n3": 1, "n4": 10, "n5": 16}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 4.04, "n1": 0, "n2": 4, "n3": 4, "n4": 6, "n5": 13}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.44, "n1": 0, "n2": 1, "n3": 2, "n4": 8, "n5": 16}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.59, "n1": 0, "n2": 0, "n3": 2, "n4": 7, "n5": 18}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.52, "n1": 0, "n2": 0, "n3": 1, "n4": 11, "n5": 15}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.48, "n1": 0, "n2": 0, "n3": 1, "n4": 12, "n5": 14}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 4.37, "n1": 0, "n2": 0, "n3": 4, "n4": 9, "n5": 14}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 3.91, "n1": 0, "n2": 1, "n3": 3, "n4": 3, "n5": 4}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.09, "n1": 0, "n2": 0, "n3": 4, "n4": 2, "n5": 5}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.0, "n1": 0, "n2": 1, "n3": 2, "n4": 4, "n5": 4}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 4.18, "n1": 0, "n2": 0, "n3": 2, "n4": 5, "n5": 4}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.09, "n1": 0, "n2": 1, "n3": 2, "n4": 3, "n5": 5}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.36, "n1": 0, "n2": 0, "n3": 1, "n4": 5, "n5": 5}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.0, "n1": 0, "n2": 0, "n3": 4, "n4": 3, "n5": 4}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.0, "n1": 0, "n2": 0, "n3": 4, "n4": 3, "n5": 4}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 3.91, "n1": 0, "n2": 0, "n3": 5, "n4": 2, "n5": 4}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 4.59, "n1": 0, "n2": 0, "n3": 0, "n4": 7, "n5": 10}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.47, "n1": 0, "n2": 1, "n3": 0, "n4": 6, "n5": 10}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.41, "n1": 0, "n2": 0, "n3": 1, "n4": 8, "n5": 8}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 4.59, "n1": 0, "n2": 0, "n3": 0, "n4": 7, "n5": 10}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.53, "n1": 0, "n2": 0, "n3": 0, "n4": 8, "n5": 9}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.76, "n1": 0, "n2": 0, "n3": 0, "n4": 4, "n5": 13}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.53, "n1": 0, "n2": 0, "n3": 0, "n4": 8, "n5": 9}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.47, "n1": 0, "n2": 0, "n3": 1, "n4": 7, "n5": 9}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 4.53, "n1": 0, "n2": 0, "n3": 2, "n4": 4, "n5": 11}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 4.25, "n1": 1, "n2": 0, "n3": 3, "n4": 2, "n5": 10}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.06, "n1": 0, "n2": 1, "n3": 4, "n4": 4, "n5": 7}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.12, "n1": 0, "n2": 1, "n3": 4, "n4": 3, "n5": 8}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 4.19, "n1": 0, "n2": 1, "n3": 3, "n4": 4, "n5": 8}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.25, "n1": 0, "n2": 0, "n3": 4, "n4": 4, "n5": 8}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.44, "n1": 0, "n2": 0, "n3": 3, "n4": 3, "n5": 10}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.31, "n1": 1, "n2": 0, "n3": 2, "n4": 3, "n5": 10}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.19, "n1": 1, "n2": 0, "n3": 3, "n4": 3, "n5": 9}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 4.25, "n1": 0, "n2": 0, "n3": 3, "n4": 6, "n5": 7}, {"course_id": "india", "course": "인도 시장 진출 과정", "dim_order": 1, "dim_id": "purpose", "dimension": "목적 부합", "area": "교육 기획", "question": "교육이 나의 수강 목적에 부합한다.", "avg": 4.62, "n1": 0, "n2": 0, "n3": 1, "n4": 1, "n5": 6}, {"course_id": "india", "course": "인도 시장 진출 과정", "dim_order": 2, "dim_id": "structure", "dimension": "교육 구성", "area": "교육 기획", "question": "전반적인 교육 구성이 잘 되어있다.", "avg": 4.5, "n1": 0, "n2": 0, "n3": 1, "n4": 2, "n5": 5}, {"course_id": "india", "course": "인도 시장 진출 과정", "dim_order": 3, "dim_id": "difficulty", "dimension": "난이도", "area": "교육 기획", "question": "교육 내용의 난이도가 적절하다.", "avg": 4.62, "n1": 0, "n2": 0, "n3": 1, "n4": 1, "n5": 6}, {"course_id": "india", "course": "인도 시장 진출 과정", "dim_order": 4, "dim_id": "facility", "dimension": "환경·시설", "area": "교육 운영", "question": "교육 환경이 만족스러웠다.", "avg": 4.62, "n1": 0, "n2": 0, "n3": 1, "n4": 1, "n5": 6}, {"course_id": "india", "course": "인도 시장 진출 과정", "dim_order": 5, "dim_id": "time", "dimension": "강의 시간", "area": "교육 운영", "question": "교육별 강의 시간은 적절하였다.", "avg": 4.62, "n1": 0, "n2": 0, "n3": 1, "n4": 1, "n5": 6}, {"course_id": "india", "course": "인도 시장 진출 과정", "dim_order": 6, "dim_id": "operation", "dimension": "교육 운영", "area": "교육 운영", "question": "전반적인 교육 운영은 원활하게 이루어졌다.", "avg": 4.62, "n1": 0, "n2": 0, "n3": 1, "n4": 1, "n5": 6}, {"course_id": "india", "course": "인도 시장 진출 과정", "dim_order": 7, "dim_id": "info", "dimension": "정보 습득", "area": "성과·추천", "question": "교육을 통해 업무에 도움이 되는 정보를 얻었다.", "avg": 4.25, "n1": 0, "n2": 0, "n3": 2, "n4": 2, "n5": 4}, {"course_id": "india", "course": "인도 시장 진출 과정", "dim_order": 8, "dim_id": "usefulness", "dimension": "업무 활용", "area": "성과·추천", "question": "교육 내용은 실제 업무 수행에 도움이 될 것이다.", "avg": 4.12, "n1": 0, "n2": 1, "n3": 1, "n4": 2, "n5": 4}, {"course_id": "india", "course": "인도 시장 진출 과정", "dim_order": 9, "dim_id": "recommend", "dimension": "추천 의향", "area": "성과·추천", "question": "해당 교육과정을 타인에게 추천할 의향이 있다.", "avg": 4.0, "n1": 1, "n2": 0, "n3": 1, "n4": 2, "n5": 4}], "instructors": [{"inst_id": "japan-01", "course_id": "japan", "course": "일본 시장 진출 과정", "instructor": "조태형 대표", "role": "일본 지사 설립/비즈니스 대표", "overall": 4.21, "expertise": 4.32, "clarity": 4.36, "engagement": 4.23, "materials": 3.95}, {"inst_id": "japan-02", "course_id": "japan", "course": "일본 시장 진출 과정", "instructor": "양우진 부대표", "role": "한·일 기술 협력 통상 부대표", "overall": 4.32, "expertise": 4.41, "clarity": 4.36, "engagement": 4.14, "materials": 4.36}, {"inst_id": "japan-03", "course_id": "japan", "course": "일본 시장 진출 과정", "instructor": "이채현 대표", "role": "도쿄 현지 마케팅 컨설턴트", "overall": 4.1, "expertise": 4.23, "clarity": 4.09, "engagement": 3.86, "materials": 4.23}, {"inst_id": "indonesia-04", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "instructor": "고형진 대표", "role": "인도네시아 트레이딩 실무 대표", "overall": 3.88, "expertise": 4.31, "clarity": 3.77, "engagement": 3.69, "materials": 3.77}, {"inst_id": "indonesia-05", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "instructor": "김윤동 CMO", "role": "아세안 유통 마케팅 책임자", "overall": 4.19, "expertise": 4.31, "clarity": 4.23, "engagement": 4.08, "materials": 4.15}, {"inst_id": "indonesia-06", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "instructor": "김동선 센터장", "role": "아시아 권역 진출 지원 소장", "overall": 4.27, "expertise": 4.46, "clarity": 4.31, "engagement": 4.15, "materials": 4.15}, {"inst_id": "indonesia-07", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "instructor": "이건동 대표", "role": "다자역 통상 컨설팅 대표", "overall": 4.33, "expertise": 4.77, "clarity": 4.15, "engagement": 4.23, "materials": 4.15}, {"inst_id": "global-sales-08", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "instructor": "정희준 교수", "role": "글로벌 세일즈 실무 교수", "overall": 4.66, "expertise": 4.71, "clarity": 4.59, "engagement": 4.65, "materials": 4.71}, {"inst_id": "global-sales-09", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "instructor": "김동영 대표", "role": "해외 영업/마케팅 전문가", "overall": 4.68, "expertise": 4.88, "clarity": 4.47, "engagement": 4.65, "materials": 4.71}, {"inst_id": "export-first-10", "course_id": "export-first", "course": "수출 첫 걸음 과정", "instructor": "정재승 교수", "role": "수출 실전 전문가", "overall": 4.56, "expertise": 4.71, "clarity": 4.5, "engagement": 4.5, "materials": 4.54}, {"inst_id": "export-first-11", "course_id": "export-first", "course": "수출 첫 걸음 과정", "instructor": "강영수 대표", "role": "글로벌 시장 진출 전략가", "overall": 4.64, "expertise": 4.71, "clarity": 4.61, "engagement": 4.64, "materials": 4.61}, {"inst_id": "export-first-12", "course_id": "export-first", "course": "수출 첫 걸음 과정", "instructor": "최철식 위원", "role": "수출 시장 분석 자문역", "overall": 4.66, "expertise": 4.75, "clarity": 4.68, "engagement": 4.61, "materials": 4.61}, {"inst_id": "usa-13", "course_id": "usa", "course": "미국시장 진출 과정", "instructor": "박민경 PM", "role": "글로벌 비즈니스/운영 리더", "overall": 4.71, "expertise": 4.75, "clarity": 4.67, "engagement": 4.58, "materials": 4.83}, {"inst_id": "usa-14", "course_id": "usa", "course": "미국시장 진출 과정", "instructor": "전용대 관세사", "role": "통관/물류 전문가", "overall": 4.75, "expertise": 4.83, "clarity": 4.75, "engagement": 4.67, "materials": 4.75}, {"inst_id": "usa-15", "course_id": "usa", "course": "미국시장 진출 과정", "instructor": "박다솔 대표", "role": "온라인 미국 현지 마케팅 대표", "overall": 4.83, "expertise": 4.83, "clarity": 4.92, "engagement": 4.75, "materials": 4.83}, {"inst_id": "exhibition-16", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "instructor": "이형주 대표", "role": "해외 전시 마케팅 전략 전문가", "overall": 4.81, "expertise": 4.85, "clarity": 4.81, "engagement": 4.78, "materials": 4.81}, {"inst_id": "exhibition-17", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "instructor": "윤동현 대표", "role": "전시 디자인 및 기획 전문가", "overall": 4.4, "expertise": 4.7, "clarity": 4.41, "engagement": 4.19, "materials": 4.3}, {"inst_id": "vietnam-18", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "instructor": "김나은 과장", "role": "1교시 강사", "overall": 4.5, "expertise": 4.45, "clarity": 4.55, "engagement": 4.55, "materials": 4.45}, {"inst_id": "vietnam-19", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "instructor": "이채안 대표", "role": "2교시 강사", "overall": 3.91, "expertise": 3.82, "clarity": 4.0, "engagement": 3.91, "materials": 3.91}, {"inst_id": "vietnam-20", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "instructor": "김태윤 관세사", "role": "3교시 강사", "overall": 4.57, "expertise": 4.64, "clarity": 4.64, "engagement": 4.55, "materials": 4.45}, {"inst_id": "global-sales-2-21", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "instructor": "정희준 교수", "role": "글로벌 세일즈 실무 교수", "overall": 4.66, "expertise": 4.76, "clarity": 4.65, "engagement": 4.59, "materials": 4.65}, {"inst_id": "global-sales-2-22", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "instructor": "김동영 대표", "role": "해외 영업/마케팅 전문가", "overall": 4.63, "expertise": 4.82, "clarity": 4.59, "engagement": 4.59, "materials": 4.53}, {"inst_id": "exhibition-2-23", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "instructor": "이형주 대표", "role": "해외 전시 마케팅 전략 전문가", "overall": 4.59, "expertise": 4.56, "clarity": 4.69, "engagement": 4.5, "materials": 4.62}, {"inst_id": "exhibition-2-24", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "instructor": "윤동현 대표", "role": "전시 디자인 및 기획 전문가", "overall": 4.48, "expertise": 4.69, "clarity": 4.5, "engagement": 4.25, "materials": 4.5}, {"inst_id": "india-25", "course_id": "india", "course": "인도 시장 진출 과정", "instructor": "빈준화 실장", "role": "1교시 강사", "overall": 4.59, "expertise": 4.62, "clarity": 4.62, "engagement": 4.75, "materials": 4.38}, {"inst_id": "india-26", "course_id": "india", "course": "인도 시장 진출 과정", "instructor": "윤승현 관세사", "role": "2교시 강사", "overall": 4.75, "expertise": 4.75, "clarity": 4.62, "engagement": 4.75, "materials": 4.88}, {"inst_id": "india-27", "course_id": "india", "course": "인도 시장 진출 과정", "instructor": "임인애 대표", "role": "3교시 강사", "overall": 4.22, "expertise": 4.25, "clarity": 4.38, "engagement": 4.25, "materials": 4.0}], "issues": [{"issue_id": "japan-G", "course_id": "japan", "course": "일본 시장 진출 과정", "theme_id": "G", "theme": "강의 상업성·홍보성", "mentions": 2, "text": "일부 강의가 강사 본인 회사 홍보·유료 컨설팅 연결로 느껴졌다는 반발 (특히 3교시)", "ev_kind": "inst", "ev_id": "japan-03", "ev_field": "overall"}, {"issue_id": "japan-D", "course_id": "japan", "course": "일본 시장 진출 과정", "theme_id": "D", "theme": "수강생 수준·대상 불일치", "mentions": 2, "text": "수강생 업종과 맞지 않는 일괄 설명으로 시간 대비 효용이 낮았다는 지적", "ev_kind": "dim", "ev_id": "purpose", "ev_field": null}, {"issue_id": "japan-F", "course_id": "japan", "course": "일본 시장 진출 과정", "theme_id": "F", "theme": "내용 깊이·구체성 부족", "mentions": 1, "text": "전문가 노하우보다 요약해도 될 내용 위주였다는 의견", "ev_kind": "dim", "ev_id": "info", "ev_field": null}, {"issue_id": "indonesia-I", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "theme_id": "I", "theme": "수강 에티켓·소음", "mentions": 2, "text": "수업 중 통화·기침·노트북 소음으로 몰입이 방해됨 — 사전 에티켓 안내 요청", "ev_kind": "dim", "ev_id": "facility", "ev_field": null}, {"issue_id": "indonesia-H", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "theme_id": "H", "theme": "식사·간식", "mentions": 1, "text": "점심이 샌드위치뿐이라 식사 구성 개선 희망", "ev_kind": null, "ev_id": null, "ev_field": null}, {"issue_id": "global-sales-A", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "theme_id": "A", "theme": "강의장 시설·환경", "mentions": 2, "text": "강의실 냉방이 지나쳐 너무 추웠음", "ev_kind": "dim", "ev_id": "facility", "ev_field": null}, {"issue_id": "global-sales-C", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "theme_id": "C", "theme": "시간 배분·Q&A 부족", "mentions": 1, "text": "해외거래선 발굴보고 등 기대한 주제에 시간이 거의 배정되지 않음", "ev_kind": "dim", "ev_id": "time", "ev_field": null}, {"issue_id": "global-sales-F", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "theme_id": "F", "theme": "내용 깊이·구체성 부족", "mentions": 1, "text": "일반적인 기본 내용은 줄이고 실무 심화 위주로 해달라는 의견", "ev_kind": "dim", "ev_id": "info", "ev_field": null}, {"issue_id": "export-first-E", "course_id": "export-first", "course": "수출 첫 걸음 과정", "theme_id": "E", "theme": "실습·참여 활동 부족", "mentions": 2, "text": "자사 제품으로 계약서를 직접 작성해보는 등 실습 위주 수업 요청", "ev_kind": "dim", "ev_id": "usefulness", "ev_field": null}, {"issue_id": "export-first-D", "course_id": "export-first", "course": "수출 첫 걸음 과정", "theme_id": "D", "theme": "수강생 수준·대상 불일치", "mentions": 3, "text": "수출 경험이 없는 기업에게는 용어가 생소함 — 내수·초보용 트랙 분리 요청", "ev_kind": "dim", "ev_id": "purpose", "ev_field": null}, {"issue_id": "export-first-H", "course_id": "export-first", "course": "수출 첫 걸음 과정", "theme_id": "H", "theme": "식사·간식", "mentions": 1, "text": "점심 이동이 멀어 건물 내 구내식당 이용 희망", "ev_kind": null, "ev_id": null, "ev_field": null}, {"issue_id": "usa-C", "course_id": "usa", "course": "미국시장 진출 과정", "theme_id": "C", "theme": "시간 배분·Q&A 부족", "mentions": 1, "text": "2·3교시 강의 시간과 Q&A 시간이 부족", "ev_kind": "dim", "ev_id": "time", "ev_field": null}, {"issue_id": "usa-B", "course_id": "usa", "course": "미국시장 진출 과정", "theme_id": "B", "theme": "교재·자료 가독성", "mentions": 1, "text": "축소 인쇄된 교재 글씨가 너무 작음 — 컬러 PDF 제공 요청", "ev_kind": "inst", "ev_id": "*", "ev_field": "materials"}, {"issue_id": "usa-F", "course_id": "usa", "course": "미국시장 진출 과정", "theme_id": "F", "theme": "내용 깊이·구체성 부족", "mentions": 1, "text": "앞 두 강의가 개요 위주 — 예산·목표매출 등 구체적 사례·수치 희망", "ev_kind": "dim", "ev_id": "info", "ev_field": null}, {"issue_id": "usa-D", "course_id": "usa", "course": "미국시장 진출 과정", "theme_id": "D", "theme": "수강생 수준·대상 불일치", "mentions": 1, "text": "B2C 내용 포함 여부를 신청 전에 안내해달라는 요청 (B2B·B2G 기업)", "ev_kind": "dim", "ev_id": "purpose", "ev_field": null}, {"issue_id": "exhibition-B", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "theme_id": "B", "theme": "교재·자료 가독성", "mentions": 4, "text": "이미지 중심 2일차 수업인데 교재가 흑백 — 컬러·PDF 파일 배포 요청", "ev_kind": "inst", "ev_id": "exhibition-17", "ev_field": "materials"}, {"issue_id": "exhibition-A", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "theme_id": "A", "theme": "강의장 시설·환경", "mentions": 4, "text": "망가진 책상·부족한 콘센트·잘 안 보이는 화이트보드 등 강의실 문제", "ev_kind": "dim", "ev_id": "facility", "ev_field": null}, {"issue_id": "exhibition-D", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "theme_id": "D", "theme": "수강생 수준·대상 불일치", "mentions": 1, "text": "대행사를 쓰는 대기업 입장에서는 실무 활용도가 낮음", "ev_kind": "dim", "ev_id": "purpose", "ev_field": null}, {"issue_id": "exhibition-E", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "theme_id": "E", "theme": "실습·참여 활동 부족", "mentions": 1, "text": "수강생끼리 조별로 의견을 나누는 시간 요청", "ev_kind": "dim", "ev_id": "usefulness", "ev_field": null}, {"issue_id": "vietnam-C", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "theme_id": "C", "theme": "시간 배분·Q&A 부족", "mentions": 1, "text": "질의응답 시간이 있었으면 좋겠다는 요청", "ev_kind": "dim", "ev_id": "time", "ev_field": null}, {"issue_id": "vietnam-J", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "theme_id": "J", "theme": "특정 강사 강의 품질", "mentions": 1, "text": "2교시 강의 — 자료는 좋았으나 발표가 아쉬워 시간이 아까웠다는 의견", "ev_kind": "inst", "ev_id": "vietnam-19", "ev_field": "overall"}, {"issue_id": "global-sales-2-D", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "theme_id": "D", "theme": "수강생 수준·대상 불일치", "mentions": 1, "text": "특정 산업 사례 대신 여러 업계의 B2B 해외영업 사례 비교 요청", "ev_kind": "dim", "ev_id": "purpose", "ev_field": null}, {"issue_id": "exhibition-2-A", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "theme_id": "A", "theme": "강의장 시설·환경", "mentions": 1, "text": "의자가 불편함", "ev_kind": "dim", "ev_id": "facility", "ev_field": null}, {"issue_id": "exhibition-2-D", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "theme_id": "D", "theme": "수강생 수준·대상 불일치", "mentions": 3, "text": "2일차가 브랜드 담당자보다 설치업체 관점 — \"둘째 날은 추천하지 않는다\"는 응답 포함", "ev_kind": "dim", "ev_id": "purpose", "ev_field": null}, {"issue_id": "exhibition-2-B", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "theme_id": "B", "theme": "교재·자료 가독성", "mentions": 2, "text": "교재가 흑백이라 이미지가 잘 안 보임 — 컬러·PDF 요청", "ev_kind": "inst", "ev_id": "*", "ev_field": "materials"}, {"issue_id": "exhibition-2-F", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "theme_id": "F", "theme": "내용 깊이·구체성 부족", "mentions": 1, "text": "전시 한 건의 전 과정을 디테일하게 다룬 실제 예제가 더 필요", "ev_kind": "dim", "ev_id": "info", "ev_field": null}, {"issue_id": "india-C", "course_id": "india", "course": "인도 시장 진출 과정", "theme_id": "C", "theme": "시간 배분·Q&A 부족", "mentions": 1, "text": "질의응답 시간을 따로 마련해달라는 요청 — 수업 중간 질문으로 흐름이 끊김", "ev_kind": "dim", "ev_id": "time", "ev_field": null}], "company_size": [{"course_id": "japan", "course": "일본 시장 진출 과정", "size": "중소기업", "count": 26}, {"course_id": "japan", "course": "일본 시장 진출 과정", "size": "중견기업", "count": 3}, {"course_id": "japan", "course": "일본 시장 진출 과정", "size": "대기업", "count": 0}, {"course_id": "japan", "course": "일본 시장 진출 과정", "size": "정부유관", "count": 0}, {"course_id": "japan", "course": "일본 시장 진출 과정", "size": "학생", "count": 0}, {"course_id": "japan", "course": "일본 시장 진출 과정", "size": "기타", "count": 4}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "size": "중소기업", "count": 12}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "size": "중견기업", "count": 4}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "size": "대기업", "count": 0}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "size": "정부유관", "count": 0}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "size": "학생", "count": 0}, {"course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "size": "기타", "count": 1}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "size": "중소기업", "count": 17}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "size": "중견기업", "count": 6}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "size": "대기업", "count": 0}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "size": "정부유관", "count": 0}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "size": "학생", "count": 0}, {"course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "size": "기타", "count": 2}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "size": "중소기업", "count": 26}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "size": "중견기업", "count": 1}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "size": "대기업", "count": 5}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "size": "정부유관", "count": 0}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "size": "학생", "count": 0}, {"course_id": "export-first", "course": "수출 첫 걸음 과정", "size": "기타", "count": 1}, {"course_id": "usa", "course": "미국시장 진출 과정", "size": "중소기업", "count": 10}, {"course_id": "usa", "course": "미국시장 진출 과정", "size": "중견기업", "count": 3}, {"course_id": "usa", "course": "미국시장 진출 과정", "size": "대기업", "count": 0}, {"course_id": "usa", "course": "미국시장 진출 과정", "size": "정부유관", "count": 1}, {"course_id": "usa", "course": "미국시장 진출 과정", "size": "학생", "count": 0}, {"course_id": "usa", "course": "미국시장 진출 과정", "size": "기타", "count": 1}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "size": "중소기업", "count": 23}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "size": "중견기업", "count": 4}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "size": "대기업", "count": 3}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "size": "정부유관", "count": 0}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "size": "학생", "count": 0}, {"course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "size": "기타", "count": 0}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "size": "중소기업", "count": 9}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "size": "중견기업", "count": 3}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "size": "대기업", "count": 0}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "size": "정부유관", "count": 1}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "size": "학생", "count": 0}, {"course_id": "vietnam", "course": "베트남 시장 진출 과정", "size": "기타", "count": 0}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "size": "중소기업", "count": 19}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "size": "중견기업", "count": 2}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "size": "대기업", "count": 1}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "size": "정부유관", "count": 0}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "size": "학생", "count": 0}, {"course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "size": "기타", "count": 0}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "size": "중소기업", "count": 13}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "size": "중견기업", "count": 3}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "size": "대기업", "count": 0}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "size": "정부유관", "count": 2}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "size": "학생", "count": 0}, {"course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "size": "기타", "count": 1}, {"course_id": "india", "course": "인도 시장 진출 과정", "size": "중소기업", "count": 14}, {"course_id": "india", "course": "인도 시장 진출 과정", "size": "중견기업", "count": 1}, {"course_id": "india", "course": "인도 시장 진출 과정", "size": "대기업", "count": 0}, {"course_id": "india", "course": "인도 시장 진출 과정", "size": "정부유관", "count": 0}, {"course_id": "india", "course": "인도 시장 진출 과정", "size": "학생", "count": 0}, {"course_id": "india", "course": "인도 시장 진출 과정", "size": "기타", "count": 0}], "comments": [{"comment_id": "japan-요약-01", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "요약", "seq": 1, "text": "10점 만점 기준 7.8점으로 상반기 과정 중 가장 낮은 만족도를 기록했습니다."}, {"comment_id": "japan-요약-02", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "요약", "seq": 2, "text": "양우진 부대표(4.33)와 조태형 대표(4.23)의 일본 상관습·교섭 규칙 설명은 전문 정보로 호평을 받았습니다."}, {"comment_id": "japan-요약-03", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "요약", "seq": 3, "text": "반면 일부 세션이 강사 소속 회사 광고나 유료 컨설팅 연결로 느껴졌다는 거부감이 강했고, 수강생 업종과 맞지 않는 내용으로 시간 낭비감이 컸습니다. 강의 상업성 배제 원칙과 대상 세분화가 시급한 과제입니다."}, {"comment_id": "japan-강점-01", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "강점", "seq": 1, "text": "일본인 교섭 문화와 도쿄 현지 관습에 대한 실전 팁"}, {"comment_id": "japan-강점-02", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "강점", "seq": 2, "text": "조태형 대표·양우진 부대표의 실전 경험"}, {"comment_id": "japan-강점-03", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "강점", "seq": 3, "text": "통상 규제와 시장 진출 대응 프레임"}, {"comment_id": "japan-원문-01", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "원문", "seq": 1, "text": "저희 사업분야와 맞지 않는 내용이 다뤄졌음은 물론 투자 시간대비 아쉬웠습니다."}, {"comment_id": "japan-원문-02", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "원문", "seq": 2, "text": "전문 강사 라인업을 기대했으나 강사들의 회사 광고를 시간내어 듣는 느낌이었습니다. 특히 세번째 강의는 다뤄지는 내용에서 요약하고 넘어가도 되는것들을 다루셨더라고요."}, {"comment_id": "japan-원문-03", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "원문", "seq": 3, "text": "저는 전문가들의 노하우를 듣고 싶었는데 투자 시간과 비용 대비 얻은 것이 많지 않았습니다."}, {"comment_id": "japan-원문-04", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "원문", "seq": 4, "text": "교육내용이 아무리 팩트여도, 결국 강사의 상업적 목적에 연결된다는 느낌은 없앨수 없습니다.(강의가 결국 '기,승,전, 강사의 업체' 임)"}, {"comment_id": "japan-원문-05", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "원문", "seq": 5, "text": "도움이 되는 업체라면 그것또한 의미 있다고 생각합니다만, 홍보로 이어지는 것 같았어요."}, {"comment_id": "japan-원문-06", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "원문", "seq": 6, "text": "준비하시느라 고생하셨습니다. 감사합니다."}, {"comment_id": "indonesia-요약-01", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "kind": "요약", "seq": 1, "text": "10점 만점 기준 8.2점의 만족도를 기록했습니다."}, {"comment_id": "indonesia-요약-02", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "kind": "요약", "seq": 2, "text": "이건동 대표(4.35)와 김동선 센터장(4.30)의 통상 실무 사례와 아세안 유통 트렌드 강의가 현실적인 진출 방향을 제시해 높게 평가됐습니다."}, {"comment_id": "indonesia-요약-03", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "kind": "요약", "seq": 3, "text": "다만 수업 중 전화·노트북 소음 등 수강 에티켓 문제와 샌드위치 위주의 단조로운 점심 구성에 대한 개선 요청이 있었습니다. 환경·시설 점수(3.9)는 상반기 과정 중 가장 낮습니다."}, {"comment_id": "indonesia-강점-01", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "kind": "강점", "seq": 1, "text": "이건동 대표의 전문성과 통상 실무 사례"}, {"comment_id": "indonesia-강점-02", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "kind": "강점", "seq": 2, "text": "김동선 센터장의 아세안 권역 트렌드 분석"}, {"comment_id": "indonesia-강점-03", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "kind": "강점", "seq": 3, "text": "인도네시아 유통망과 실전 팁"}, {"comment_id": "indonesia-원문-01", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "kind": "원문", "seq": 1, "text": "강연중 전화를 하시거나 가래를 주기적으로 컥컥 대시는 분들이있어 좀 거슬린게 아쉬웠습니다."}, {"comment_id": "indonesia-원문-02", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "kind": "원문", "seq": 2, "text": "수업중 휴대폰 소음이나 노트북 소음이 너무 큽니다. 수업시작전에 수강생들에게 안내부탁드립니다."}, {"comment_id": "indonesia-원문-03", "course_id": "indonesia", "course": "인도네시아 시장 진출 과정", "kind": "원문", "seq": 3, "text": "점심은 샌드위치보다는 조금더 나은 것이었으면 좋겠습니다. 감사합니다."}, {"comment_id": "global-sales-요약-01", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "요약", "seq": 1, "text": "10점 만점 기준 8.8점으로 높은 만족도를 기록했습니다."}, {"comment_id": "global-sales-요약-02", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "요약", "seq": 2, "text": "김동영 대표(전문성 4.88)와 정희준 교수(4.71)의 바이어 교섭·세일즈 파이프라인 관리 강의가 뛰어난 실무 전수로 꼽혔습니다."}, {"comment_id": "global-sales-요약-03", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "요약", "seq": 3, "text": "반면 오영교실 냉방이 지나쳐 춥다는 지적이 반복됐고, 해외거래선 발굴보고 같은 실무 주제에 더 많은 시간을 원하는 의견이 있었습니다."}, {"comment_id": "global-sales-강점-01", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "강점", "seq": 1, "text": "실무적이고 알찬 교육 내용과 구성"}, {"comment_id": "global-sales-강점-02", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "강점", "seq": 2, "text": "운영과 다과 준비의 정성"}, {"comment_id": "global-sales-강점-03", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "강점", "seq": 3, "text": "강사진의 높은 실전 역량"}, {"comment_id": "global-sales-원문-01", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "원문", "seq": 1, "text": "너무 일반적은 내용은 생략하고 실무 위주의 교육이 제게는 적합하다고 생각됩니다"}, {"comment_id": "global-sales-원문-02", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "원문", "seq": 2, "text": "생각보다 내용이 실무적이고 알찼다"}, {"comment_id": "global-sales-원문-03", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "원문", "seq": 3, "text": "강의목차에 해외거래선발굴보고 그거 들을려고 수강했는데, 그것만 빼고 1박2일 교육들은게 아쉬운 점입니다."}, {"comment_id": "global-sales-원문-04", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "원문", "seq": 4, "text": "전반적으로 다 좋았어요 감사합니다. 운영도 간식 선정도 다 고심하신 것이 느껴져 감사합니다. 다만 강의실이 너무 추웠던 것 딱 하나만 아쉽습니다."}, {"comment_id": "global-sales-원문-05", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "원문", "seq": 5, "text": "강의실이 너무 추웟음"}, {"comment_id": "global-sales-원문-06", "course_id": "global-sales", "course": "글로벌 세일즈 역량 향상 과정 1회차", "kind": "원문", "seq": 6, "text": "AI 스킬 활용하는 해외영업 강좌 오픈 희망합니다."}, {"comment_id": "export-first-요약-01", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "요약", "seq": 1, "text": "10점 만점 기준 8.5점의 안정적인 만족도를 기록했습니다."}, {"comment_id": "export-first-요약-02", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "요약", "seq": 2, "text": "최철식 위원(4.68), 강영수 대표(4.63), 정재승 교수(4.55)의 실증 사례 중심 강의가 큰 신뢰를 얻었습니다."}, {"comment_id": "export-first-요약-03", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "요약", "seq": 3, "text": "다만 수출 입문자 대상인 만큼 자사 제품으로 계약서를 직접 작성해보는 실습 시간을 늘려달라는 요구가 강했고, 초보 기업용 트랙 분리와 구내식당 이용 등 편의 보완 요청이 있었습니다."}, {"comment_id": "export-first-강점-01", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "강점", "seq": 1, "text": "미국·중국 등 타깃 권역 수출을 준비하는 기업에 유용한 정보"}, {"comment_id": "export-first-강점-02", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "강점", "seq": 2, "text": "적용 가능한 구체적 수출 프로세스 안내"}, {"comment_id": "export-first-강점-03", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "강점", "seq": 3, "text": "실습·실제 과정 중심의 수업"}, {"comment_id": "export-first-원문-01", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "원문", "seq": 1, "text": "수출과정을 더 자세히 알고싶습니다"}, {"comment_id": "export-first-원문-02", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "원문", "seq": 2, "text": "실제 수출 과정 사례를 토대로 수업을 진행하면 좋겠다"}, {"comment_id": "export-first-원문-03", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "원문", "seq": 3, "text": "미국, 중국에 수출을 준비하고있는 기업으로써, 많은 도움이되었습니다."}, {"comment_id": "export-first-원문-04", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "원문", "seq": 4, "text": "수출과정도 바우처처럼 내수/초보 이런식으로 디테일화해서 하면 좋을 것 같아요."}, {"comment_id": "export-first-원문-05", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "원문", "seq": 5, "text": "0인상태에서 넣으려니 너무 생소하고 어렵네요 좀더 실습 위주였으면 좋겠어요"}, {"comment_id": "export-first-원문-06", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "원문", "seq": 6, "text": "예) 자사 제품을 가지고 계약서 작성해보기 등."}, {"comment_id": "export-first-원문-07", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "원문", "seq": 7, "text": "점심 식사를 구내식당에서 제공해 주면 좋을 듯 함"}, {"comment_id": "export-first-원문-08", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "원문", "seq": 8, "text": "만족스럽습니다"}, {"comment_id": "export-first-원문-09", "course_id": "export-first", "course": "수출 첫 걸음 과정", "kind": "원문", "seq": 9, "text": "수출초보기업 첫 수출 실전 실습처럼 정말 세밀하게 알려주는 수업이 꼭 있으면 좋겠습니다."}, {"comment_id": "usa-요약-01", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "요약", "seq": 1, "text": "10점 만점 기준 9.1점으로 상반기 과정 중 가장 높은 만족도를 기록했습니다."}, {"comment_id": "usa-요약-02", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "요약", "seq": 2, "text": "박다솔 대표의 미국 온·오프라인 마케팅 강의와 전용대 관세사의 통관 실무 강의가 특히 호평을 받았습니다."}, {"comment_id": "usa-요약-03", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "요약", "seq": 3, "text": "반면 교과 범위에 비해 강의·Q&A 시간이 부족했고, 축소 인쇄된 교재의 가독성과 B2B/B2C 대상 사전 안내가 아쉽다는 의견이 있었습니다. 환경·시설(4.8)은 상반기 과정 중 가장 높았습니다."}, {"comment_id": "usa-강점-01", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "강점", "seq": 1, "text": "박다솔 대표 등 실전 적용성이 높은 강의"}, {"comment_id": "usa-강점-02", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "강점", "seq": 2, "text": "해외 마케팅 핵심 가이드와 구체적 사례"}, {"comment_id": "usa-강점-03", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "강점", "seq": 3, "text": "강사진의 전문성과 열정적인 피드백"}, {"comment_id": "usa-강점-04", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "강점", "seq": 4, "text": "폐강하지 않고 수강 기회를 제공"}, {"comment_id": "usa-강점-05", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "강점", "seq": 5, "text": "후속 심화 강의 요청이 활발"}, {"comment_id": "usa-원문-01", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 1, "text": "미국 시장지출 전략 심화"}, {"comment_id": "usa-원문-02", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 2, "text": "폐강하지않고 수강할 기회를 주셔서 감사합니다"}, {"comment_id": "usa-원문-03", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 3, "text": "첫 두개 강의는 구체적인 실무단에서의 적용이라기보다 개요같은 느낌이 많이 났음. 수강생들의 카테고리가 다르다보니 어쩔 수 없지만 use case가 많거나 조금 더 실질적인 공부가 되면 좋겠음. 마케팅 부분은 초기 도전 기업들의 실제 필요한 예산 규모나 목표매출 세팅이나 업계 평균 사용금액 등 참고할만한 수치적인 내용이 있으면 좋겠음. 일반적인 how to 보다 구체적이면 좋을 것 같음."}, {"comment_id": "usa-원문-04", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 4, "text": "오늘 강의 난이도도 구성도 실제 활용도도 높을 것 같은 너무 좋은 강의였습니다 감사합니다"}, {"comment_id": "usa-원문-05", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 5, "text": "저는 B2B,B2G 거래를 하는 기업이기에, 마지막 강의는 듣지 않았습니다. 강의신청 전 B2C 포함이라는 안내를 미리 해주셨다면 도움이 됐을것 같습니다."}, {"comment_id": "usa-원문-06", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 6, "text": "오후에 들었던 온라인 미국 현지마케팅 많은 도움이 되었습니다. 온라인 미국 현지마케팅에 대해 더 깊이 배우는 심화 강의가 있으면 수강신청하겠습니다."}, {"comment_id": "usa-원문-07", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 7, "text": "2번째와 3번째 강의는 교과정에 비해 시간이 다소 부족했고, Q&A 시간도 부족"}, {"comment_id": "usa-원문-08", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 8, "text": "강의교재는 축소된 프린트 물이 아닌, pdf(칼라) 파일로 제공해 주었으면 합니다. (글자가 너무 작아서 보기 불편)"}, {"comment_id": "usa-원문-09", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 9, "text": "모든 강사분들께 감사인사드립니다. 짧은시간이었지만 많은부분 도움되었습니다."}, {"comment_id": "usa-원문-10", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 10, "text": "특히 박다솔 대표의 현장에서의 실무를 피부에 와닿게 설명주신게 컸습니다."}, {"comment_id": "usa-원문-11", "course_id": "usa", "course": "미국시장 진출 과정", "kind": "원문", "seq": 11, "text": "이런 강좌가 앞으로 많이 개설되길바랍니다."}, {"comment_id": "exhibition-요약-01", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "요약", "seq": 1, "text": "10점 만점 기준 8.6점의 우수한 만족도를 기록했습니다."}, {"comment_id": "exhibition-요약-02", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "요약", "seq": 2, "text": "이형주 대표(4.83)의 현장 지식 전달과 밀도 높은 전시 실무 교안이 큰 호평을 받았습니다."}, {"comment_id": "exhibition-요약-03", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "요약", "seq": 3, "text": "다만 이미지 위주 수업인데 교재가 흑백 인쇄라 식별이 어려웠고, 오영교실의 고장 난 책상·부족한 콘센트·잘 보이지 않는 화이트보드 등 시설 문제가 환경·시설 점수(4.0) 하락으로 이어졌습니다."}, {"comment_id": "exhibition-강점-01", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "강점", "seq": 1, "text": "전시 담당자가 없는 중소기업, 첫 전시 기업에 특히 유용"}, {"comment_id": "exhibition-강점-02", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "강점", "seq": 2, "text": "친절한 운영진과 훌륭한 다과·식사"}, {"comment_id": "exhibition-강점-03", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "강점", "seq": 3, "text": "이형주 대표의 흡입력 있는 강의와 실무 팁"}, {"comment_id": "exhibition-원문-01", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 1, "text": "전시 담당자가 없고 전시를 처음 나가는 중소기업에게 너무좋음"}, {"comment_id": "exhibition-원문-02", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 2, "text": "에이전시를 활용하는 대기업 (대규모 부스) 입장에서의 교육내용은 아쉬운 것 같습니다. 실무에 활용할 것이 적은 느낌"}, {"comment_id": "exhibition-원문-03", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 3, "text": "수강생들이 조별로 의견을 나누는 시간이 있었으면 합니다"}, {"comment_id": "exhibition-원문-04", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 4, "text": "2일차 교육은 이미지 중심의 수업인데 교제가 흑백이라 보기 어려움. 그리고 교재에 없는 이미지도 많았음"}, {"comment_id": "exhibition-원문-05", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 5, "text": "이미지 자료가 많은데 흑백이라서 자료 식별이 어렵습니다. 사진 자료는 워터마크 박아서 따로 다운받을수 있게 제공되면 좋겠습니다."}, {"comment_id": "exhibition-원문-06", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 6, "text": "자료 배포는 전자파일로 받았으면 합니다. PDF로 주시는게 더 도움 될것 같습니다"}, {"comment_id": "exhibition-원문-07", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 7, "text": "고장난 책상, 부족한 콘센트"}, {"comment_id": "exhibition-원문-08", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 8, "text": "의자나 테이블이 강의에 적합한 공간은 아니었습니다."}, {"comment_id": "exhibition-원문-09", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 9, "text": "테이블이 망가진 좌석이 너무 많았고, 직장인들 대상인데 랩탑을 사용하기 어려운 환경이라 그 점이 아쉬웠습니다."}, {"comment_id": "exhibition-원문-10", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 10, "text": "그리고 강사님이 화이트보드 사용하셨는데 하나도 안보였어요."}, {"comment_id": "exhibition-원문-11", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 11, "text": "데이터는 책말고 파일이 좋아요 무거워요ᆢ ^^;;"}, {"comment_id": "exhibition-원문-12", "course_id": "exhibition", "course": "해외전시 마케팅 과정 1회차", "kind": "원문", "seq": 12, "text": "교육 자체는 만족스러웠고, 직원분들도 친절하고 다과와 식사도 좋았지만"}, {"comment_id": "japan-원문-07", "course_id": "japan", "course": "일본 시장 진출 과정", "kind": "원문", "seq": 7, "text": "마지막 교시가 별로였어요."}, {"comment_id": "india-요약-01", "course_id": "india", "course": "인도 시장 진출 과정", "kind": "요약", "seq": 1, "text": "10점 만점 기준 8.9점(평균 8.88)으로 높은 만족도를 기록했습니다. 참가 15명 중 8명이 응답했습니다."}, {"comment_id": "india-요약-02", "course_id": "india", "course": "인도 시장 진출 과정", "kind": "요약", "seq": 2, "text": "교육 기획·운영 6개 문항이 모두 4.5점 이상이었고, 윤승현 관세사(종합 4.75)와 빈준화 실장(4.59)의 강의가 높게 평가됐습니다."}, {"comment_id": "india-요약-03", "course_id": "india", "course": "인도 시장 진출 과정", "kind": "요약", "seq": 3, "text": "반면 업무 활용·추천 의향(4.0~4.25)과 3교시 임인애 대표의 강의 자료(4.00)는 상대적으로 낮았고, 질의응답 시간을 따로 마련해달라는 의견이 있었습니다. 응답자가 8명이라 한두 명의 응답에도 점수가 크게 움직인다는 점을 감안해야 합니다."}, {"comment_id": "india-강점-01", "course_id": "india", "course": "인도 시장 진출 과정", "kind": "강점", "seq": 1, "text": "교육 환경·강의 시간·운영 문항 모두 4.62점으로 운영 만족도가 고르게 높음"}, {"comment_id": "india-강점-02", "course_id": "india", "course": "인도 시장 진출 과정", "kind": "강점", "seq": 2, "text": "윤승현 관세사의 강의 자료 충실도 4.88점 — 이 과정 강사 문항 중 최고"}, {"comment_id": "india-강점-03", "course_id": "india", "course": "인도 시장 진출 과정", "kind": "강점", "seq": 3, "text": "빈준화 실장의 참여 유도 4.75점"}, {"comment_id": "india-원문-01", "course_id": "india", "course": "인도 시장 진출 과정", "kind": "원문", "seq": 1, "text": "질의응답 시간을 따로 만들어주셨으면 좋겠습니다. 수업 중간에 질문을 하시니 흐름이 끊기는 느낌입니다."}, {"comment_id": "vietnam-요약-01", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "kind": "요약", "seq": 1, "text": "10점 만점 기준 7.9점(평균 7.91)으로, 일본 과정 다음으로 낮은 만족도입니다. 참가 13명 중 11명이 응답했습니다."}, {"comment_id": "vietnam-요약-02", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "kind": "요약", "seq": 2, "text": "김태윤 관세사(종합 4.57)와 김나은 과장(4.50)의 강의는 좋은 평가를 받았지만, 2교시 이채안 대표는 종합 3.91점으로 4점에 못 미쳤고 '시간이 아깝다'는 의견이 함께 나왔습니다."}, {"comment_id": "vietnam-요약-03", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "kind": "요약", "seq": 3, "text": "목적 부합(3.91)과 추천 의향(3.91)이 이 과정에서 가장 낮았고, 질의응답 시간을 요청하는 의견이 있었습니다."}, {"comment_id": "vietnam-강점-01", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "kind": "강점", "seq": 1, "text": "전반적인 교육 운영 4.36점 — 이 과정 문항 중 최고"}, {"comment_id": "vietnam-강점-02", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "kind": "강점", "seq": 2, "text": "김태윤 관세사·김나은 과장 강의 4.5점 이상"}, {"comment_id": "vietnam-강점-03", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "kind": "강점", "seq": 3, "text": "\"전반적인 교육 구성은 좋다\"는 의견"}, {"comment_id": "vietnam-원문-01", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "kind": "원문", "seq": 1, "text": "실무 적용"}, {"comment_id": "vietnam-원문-02", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "kind": "원문", "seq": 2, "text": "질의응답시간이 있었으면 좋겠다"}, {"comment_id": "vietnam-원문-03", "course_id": "vietnam", "course": "베트남 시장 진출 과정", "kind": "원문", "seq": 3, "text": "전반적인 교육 구성은 좋은것 같습니다 2번째 교육강사님은 더 좋은 발표가 될수있는 자료인데 조금 시간이 아깝다는 느낌이 들었습니다."}, {"comment_id": "global-sales-2-요약-01", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "kind": "요약", "seq": 1, "text": "10점 만점 기준 8.8점(평균 8.76)으로 1회차(4월)와 같은 수준의 높은 만족도를 유지했습니다. 참가 22명 중 17명이 응답했습니다."}, {"comment_id": "global-sales-2-요약-02", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "kind": "요약", "seq": 2, "text": "1회차에서 '강의실이 춥다'는 지적이 있었던 환경·시설 점수가 4.29점에서 4.59점으로 올랐고, 교육 운영은 4.76점으로 가장 높았습니다."}, {"comment_id": "global-sales-2-요약-03", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "kind": "요약", "seq": 3, "text": "업계마다 B2B 해외영업 방식이 다르니 여러 산업의 사례를 비교해달라는 의견이 있었습니다."}, {"comment_id": "global-sales-2-강점-01", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "kind": "강점", "seq": 1, "text": "교육 운영 4.76점, 환경·시설 4.59점"}, {"comment_id": "global-sales-2-강점-02", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "kind": "강점", "seq": 2, "text": "김동영 대표 전문성 4.82점, 정희준 교수 전문성 4.76점"}, {"comment_id": "global-sales-2-강점-03", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "kind": "강점", "seq": 3, "text": "1회차 대비 시설 만족도 개선"}, {"comment_id": "global-sales-2-원문-01", "course_id": "global-sales-2", "course": "글로벌 세일즈 역량 향상 과정 2회차", "kind": "원문", "seq": 1, "text": "글로벌 세일즈(해외영업)는 같은 B2B 영업이라도 업계와 비즈니스 구조에 따라 성격이 크게 달라질 수 있습니다. 따라서 강의에서 특정 산업의 사례에만 한정하기보다는, 화장품, 소비재, 제조/OEM, IT, 산업재 등 서로 다른 업계의 B2B 해외영업 사례를 함께 비교해 설명해 주시면 이해에 더 도움이 될 것 같습니다. 특히 업계별로 바이어 발굴 방식, 가격 협상, 유통구조, 계약 방식, 의사결정 과정, 사후관리 방식이 어떻게 달라지는지 실제 케이스를 통해 보여주면 강의의 활용도가 더 높아질 것 같습니다."}, {"comment_id": "exhibition-2-요약-01", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "요약", "seq": 1, "text": "10점 만점 기준 8.6점(평균 8.56)으로 1회차(6월, 8.59)와 비슷했습니다. 참가 19명 중 16명이 응답했습니다."}, {"comment_id": "exhibition-2-요약-02", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "요약", "seq": 2, "text": "1일차 이형주 대표(종합 4.59)는 실무 적용에 좋았다는 평가를 받았지만, 2일차는 브랜드 담당자보다 설치업체 시선이라 루즈했다는 의견과 '둘째 날은 추천하지 않는다'는 응답이 있었습니다."}, {"comment_id": "exhibition-2-요약-03", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "요약", "seq": 3, "text": "1회차에서 지적된 흑백 교재 문제가 다시 나왔습니다. 교육 구성(4.06)과 난이도(4.12) 점수도 1회차보다 낮아졌습니다."}, {"comment_id": "exhibition-2-강점-01", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "강점", "seq": 1, "text": "교육 운영 4.44점 — 이 과정 문항 중 최고"}, {"comment_id": "exhibition-2-강점-02", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "강점", "seq": 2, "text": "이형주 대표 전달력 4.69점"}, {"comment_id": "exhibition-2-강점-03", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "강점", "seq": 3, "text": "1일차 수업이 브랜드 담당자 실무에 적용하기 좋았다는 의견"}, {"comment_id": "exhibition-2-원문-01", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "원문", "seq": 1, "text": "의자가 불편합니다..."}, {"comment_id": "exhibition-2-원문-02", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "원문", "seq": 2, "text": "수요일 수업은 브랜드 담당자의 시선에서 실무에 적용하기 좋은 수업이었습니다. 목요일 수업의 경우는 브랜드 담당자보다는 설치업체의 시선인 것 같아 중간중간 루즈해지는 포인트가 있었습니다. 브랜드 담당자의 경우 어떤 방식으로 제품이 디스플레이를 하는게 좋을 지, 견적서를 볼땐 어느 부분을 주의를 해야할지, 다양한 제품들에 따라서 어떤식으로 디스플레이를 한게 잘한건지 못한건지 등 이런 실무적인 내용으로 설치업체에서 추천하는 방향으로 더 강의 내용이 있었으면 좋겠습니다."}, {"comment_id": "exhibition-2-원문-03", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "원문", "seq": 3, "text": "강의 자료를 Pdf 로도 받을 수 있으면 실무적으로 더 도움될것같습니다."}, {"comment_id": "exhibition-2-원문-04", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "원문", "seq": 4, "text": "교제가 color 였으면(흑백이라 자료이미지가 잘 안보임)"}, {"comment_id": "exhibition-2-원문-05", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "원문", "seq": 5, "text": "17일 교육은 더 깊이 있게 실제 예제가 더 있었으면(한번의 전시를 전과정 디테일까지) 좋았을것 같다. 교육생 질문을 미리 받고 추진코자하는 나라의 전시 등 듣는 청취생의 필요에 부합하는 디테일이 아쉬웠다"}, {"comment_id": "exhibition-2-원문-06", "course_id": "exhibition-2", "course": "해외전시 마케팅 과정 2회차", "kind": "원문", "seq": 6, "text": "첫날교육은 타인에게 추천하겠지만 둘째날 교육은 추천하지 않습니다."}]}</script>
+<script>
+(() => {
+  const raw = JSON.parse(document.getElementById('kx-data').textContent);
+  const calcs = {}, memo = {}, subs = [];
+  let params = {};
+  const resolve = (id) => {
+    if (id in raw) return raw[id];
+    if (id in memo) return memo[id];
+    const c = calcs[id]; if (!c) return undefined;
+    return (memo[id] = c.fn(...c.inputs.map(resolve)));
+  };
+  const colsOf = (rows) => (Array.isArray(rows) && rows[0] ? Object.keys(rows[0]) : []);
+  window.dash = {
+    data(id) {
+      let d; try { d = resolve(id); } catch (e) { console.error(id, e); return { status: 'error', data: [], columns: [], message: String(e) }; }
+      if (d === undefined) return { status: 'missing', data: [], columns: [] };
+      return { status: 'ok', data: d, rows: d, columns: colsOf(d), refreshing: false, meta: [] };
+    },
+    calc(id, o) { calcs[id] = o; },
+    loader() {},
+    onData(fn) { subs.push(fn); try { fn(); } catch (e) { console.error(e); } },
+    params() { return { ...params }; },
+    setParams(p) { params = { ...params, ...p }; for (const k in params) if (params[k] == null) delete params[k]; run(); },
+    resetParams() { params = {}; run(); },
+    setLink(name) { try { history.replaceState(null, '', '#' + name); } catch (e) {} },
+    refresh() {},
+    colors: ['#3b7ddd', '#d9822b', '#2a9d8f', '#8e6bd6', '#c9534f', '#6b8e23', '#b8860b', '#5f6b7a'],
+  };
+  const run = () => subs.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
+  let w = innerWidth; addEventListener('resize', () => { if (innerWidth !== w) { w = innerWidth; run(); } });
+})();
+</script>
+<style>
+.kx{font-family:var(--font-anthropic-sans);color:var(--color-fg)}
+.kx-head h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;line-height:1.25}
+.kx-eyebrow{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);margin:0 0 var(--cds-gap-xs)}
+.kx-take{font-size:var(--cds-font-size-body);line-height:1.6;margin:var(--cds-gap-sm) 0 0;max-width:60rem}
+.kx .kx-take b{font-weight:600}
+.kx-tabs{display:flex;gap:var(--cds-gap-xs);flex-wrap:wrap;margin:var(--cds-gap-lg) 0 var(--cds-gap-md);border-bottom:1px solid var(--color-border-line)}
+.kx-tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:var(--cds-pad-sm) var(--cds-pad-md);font:inherit;font-size:var(--cds-font-size-body);color:var(--color-fg-muted);cursor:pointer}
+.kx-tab:hover{color:var(--color-fg)}
+.kx-tab[aria-selected="true"]{color:var(--color-fg);border-bottom-color:var(--color-fg)}
+.kx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md);margin-bottom:var(--cds-gap-md)}
+.kx-card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);min-width:0}
+.kx-card.wide{grid-column:1/-1}
+.kx-card h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.kx-note{color:var(--color-fg-muted);font-size:var(--cds-font-size-caption);line-height:1.5;margin:var(--cds-gap-xs) 0 var(--cds-gap-md)}
+.kx-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:var(--cds-gap-md);margin-bottom:var(--cds-gap-md)}
+.kx-kpi .lbl{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.kx-kpi .num{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums;margin-top:var(--cds-gap-xs);line-height:1.2}
+.kx-kpi .num small{font-family:var(--font-anthropic-sans);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-left:2px}
+.kx-kpi .sub{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-top:var(--cds-gap-xs)}
+.kx-chart{position:relative;width:100%}
+.kx-chart svg{display:block;overflow:visible}
+.kx-tick{fill:var(--color-fg-muted);font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.kx-lab{fill:var(--color-fg);font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.kx-tip{position:absolute;z-index:5;max-width:18rem;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);line-height:1.5;pointer-events:none;opacity:0}
+.kx-tip .t{color:var(--cds-text-secondary)}
+.kx-fail{display:flex;align-items:center;justify-content:center;gap:var(--cds-gap-xs);min-height:inherit;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.kx-fail .dot{width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad)}
+[data-dash-source-state=empty]{color:transparent}
+[data-dash-source-state=refreshing]{opacity:.5;transition:opacity var(--cds-dur-slow)}
+.kx-scroll{overflow-x:auto}
+.kx-heat{display:grid;min-width:54rem;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.kx-heat>div{padding:var(--cds-pad-xs);display:flex;align-items:center;justify-content:center;min-height:2.2rem;border-bottom:1px solid var(--color-panel);border-right:2px solid var(--color-panel)}
+.kx-heat .rh{justify-content:flex-start;color:var(--color-fg)}
+.kx-heat .ch{color:var(--color-fg-muted);text-align:center;line-height:1.25;align-items:flex-end;white-space:nowrap}
+.kx-heat .avg{font-weight:600}
+.kx-heat .sep{border-top:1px solid var(--color-border-line)}
+.kx-legend{display:flex;flex-wrap:wrap;gap:var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-top:var(--cds-gap-sm);align-items:center}
+.kx-legend i{display:inline-block;width:.8rem;height:.8rem;border-radius:3px;vertical-align:-2px;margin-right:4px}
+.kx-legend i.c{border-radius:50%}
+.kx-mx{display:grid;min-width:38rem;font-size:var(--cds-font-size-caption)}
+.kx-mx>div{display:flex;align-items:center;justify-content:center;min-height:2.3rem;border-bottom:1px solid var(--color-border-line);padding:0 var(--cds-pad-xs)}
+.kx-mx .rh{justify-content:flex-start;cursor:pointer;color:var(--color-fg)}
+.kx-mx .rh:hover{text-decoration:underline}
+.kx-mx .ch{color:var(--color-fg-muted);text-align:center;line-height:1.25;border-bottom-color:var(--color-border-line)}
+.kx-mx .ct{justify-content:flex-start;gap:var(--cds-gap-sm);font-variant-numeric:tabular-nums}
+.kx-dot{border-radius:50%;display:block}
+.kx-bar{height:.5rem;border-radius:4px;background:var(--cds-chart-muted)}
+.kx-bar.hot{background:var(--cds-chart-status-critical)}
+.kx-tools{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);align-items:center;margin-bottom:var(--cds-gap-sm)}
+.kx-input,.kx-select{font:inherit;font-size:var(--cds-font-size-body);color:var(--color-fg);background:var(--color-bg);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-xs) var(--cds-pad-sm);min-width:0}
+.kx-input{flex:1 1 14rem}
+.kx-chip{font:inherit;font-size:var(--cds-font-size-caption);background:var(--color-bg);color:var(--color-fg);border:1px solid var(--color-border-line);border-radius:999px;padding:2px var(--cds-pad-sm);cursor:pointer}
+.kx-tablebox{max-height:32rem;overflow:auto}
+.kx-table{width:100%;border-collapse:collapse;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.kx-table th{position:sticky;top:0;background:var(--color-panel);text-align:left;font-weight:var(--cds-font-weight-medium);color:var(--color-fg-muted);padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+.kx-table th button{all:unset;cursor:pointer}
+.kx-table th.num,.kx-table td.num{text-align:right}
+.kx-table td{padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);vertical-align:top;line-height:1.5}
+.kx-table td.low{color:var(--color-bad)}
+.kx-table td.low::before{content:"▼ ";font-size:.75em}
+.kx-cellbar{display:flex;align-items:center;gap:var(--cds-gap-sm);justify-content:flex-end}
+.kx-cellbar span.b{display:inline-block;height:.45rem;border-radius:4px;background:var(--cds-chart-muted)}
+.kx-lvl-high{color:var(--color-bad);font-weight:600}
+.kx-lvl-warn{color:var(--color-warn);font-weight:600}
+.kx-lvl-ref{color:var(--color-fg-muted)}
+.kx-issue{display:flex;flex-direction:column;gap:2px}
+.kx-issue-top{display:flex;align-items:center;gap:var(--cds-gap-sm);flex-wrap:wrap}
+.kx-badge{font-size:var(--cds-font-size-caption)}
+.kx-badge::before{content:"●";margin-right:4px;font-size:.7em;vertical-align:1px}
+.kx-issue-theme{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.kx-why{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);line-height:1.5}
+@media (max-width:640px){.kx-hide-narrow{display:none}}
+.kx-detailhead{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm) var(--cds-gap-lg);align-items:baseline;margin-bottom:var(--cds-gap-md)}
+.kx-facts{display:flex;flex-wrap:wrap;gap:var(--cds-gap-xs) var(--cds-gap-lg);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.kx-facts b{color:var(--color-fg);font-weight:600;font-variant-numeric:tabular-nums}
+.kx-list{margin:0;padding:0;list-style:none}
+.kx-list li{padding:var(--cds-pad-xs) 0;border-bottom:1px solid var(--color-border-line);font-size:var(--cds-font-size-body);line-height:1.55}
+.kx-list li:last-child{border-bottom:0}
+.kx-tag{display:inline-block;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);border:1px solid var(--color-border-line);border-radius:999px;padding:0 var(--cds-pad-xs);margin-right:var(--cds-gap-xs)}
+.kx-quote{color:var(--color-fg);font-size:var(--cds-font-size-body)}
+.kx-summary p{margin:0 0 var(--cds-gap-sm);line-height:1.65}
+</style>
+
+<div class="kx" id="kx">
+  <header class="kx-head">
+    <p class="kx-eyebrow">aSSIST × KOTRA 교육과정 만족도 · 누적 분석</p>
+    <h1>KOTRA 교육 만족도 누적 분석</h1>
+    <p class="kx-take" id="takeaway">
+      누적 <span data-source="headline" data-field="total_courses" data-fmt="int" class="dash-skeleton">—</span>개 과정 기준, 가장 약한 영역은
+      <b><span data-source="headline" data-field="low_dim" data-fmt="text" class="dash-skeleton">—</span></b>(평균 <span data-source="headline" data-field="low_avg" data-fmt="f2" class="dash-skeleton">—</span>점, <span data-source="headline" data-field="low_in" data-fmt="int" class="dash-skeleton">—</span>개 과정에서 최하위 문항)이고,<br>
+      가장 넓게 반복된 불만은 <b><span data-source="headline" data-field="top_theme" data-fmt="text" class="dash-skeleton">—</span></b>(<span data-source="headline" data-field="top_courses" data-fmt="int" class="dash-skeleton">—</span>개 과정에서 제기)입니다.
+    </p>
+  </header>
+
+  <nav class="kx-tabs" role="tablist" aria-label="페이지">
+    <button class="kx-tab" role="tab" id="tab-overview" data-page="overview">누적 현황</button>
+    <button class="kx-tab" role="tab" id="tab-areas" data-page="areas">영역별 비교</button>
+    <button class="kx-tab" role="tab" id="tab-issues" data-page="issues">반복 이슈</button>
+    <button class="kx-tab" role="tab" id="tab-instructors" data-page="instructors">강사</button>
+    <button class="kx-tab" role="tab" id="tab-detail" data-page="detail">과정 상세</button>
+  </nav>
+
+  <!-- ===== 누적 현황 ===== -->
+  <section id="overview" role="tabpanel">
+    <div class="kx-kpis">
+      <div class="kx-card kx-kpi" id="kpi-courses">
+        <div class="lbl">누적 과정</div>
+        <div class="num"><span data-source="kpi" data-field="courses" data-fmt="int" class="dash-skeleton">—</span><small>개</small></div>
+        <div class="sub">참가 <span data-source="kpi" data-field="participants" data-fmt="int">—</span>명<span id="kpi-missing"></span></div>
+      </div>
+      <div class="kx-card kx-kpi" id="kpi-respondents">
+        <div class="lbl">누적 설문 응답자</div>
+        <div class="num"><span data-source="kpi" data-field="respondents" data-fmt="int" class="dash-skeleton">—</span><small>명</small></div>
+        <div class="sub">응답률 <span data-source="kpi" data-field="response_rate" data-fmt="int">—</span>%</div>
+      </div>
+      <div class="kx-card kx-kpi" id="kpi-index">
+        <div class="lbl">평균 종합 만족지수</div>
+        <div class="num"><span data-source="kpi" data-field="avg_index" data-fmt="f1" class="dash-skeleton">—</span><small>/ 10</small></div>
+        <div class="sub">과정별 지수의 단순 평균</div>
+      </div>
+      <div class="kx-card kx-kpi" id="kpi-best">
+        <div class="lbl">최고 과정</div>
+        <div class="num"><span data-source="kpi" data-field="best_index" data-fmt="f1" class="dash-skeleton">—</span><small>/ 10</small></div>
+        <div class="sub"><span data-source="kpi" data-field="best_course" data-fmt="text">—</span></div>
+      </div>
+      <div class="kx-card kx-kpi" id="kpi-worst">
+        <div class="lbl">최저 과정</div>
+        <div class="num"><span data-source="kpi" data-field="worst_index" data-fmt="f1" class="dash-skeleton">—</span><small>/ 10</small></div>
+        <div class="sub"><span data-source="kpi" data-field="worst_course" data-fmt="text">—</span></div>
+      </div>
+    </div>
+
+    <div class="kx-grid">
+      <div class="kx-card wide" id="card-trend">
+        <h2>과정별 종합 만족지수 추이</h2>
+        <p class="kx-note">교육일 순서. 종합 만족지수는 설문의 '전반적 만족도'(10점) 문항 응답 평균이며, 점선은 누적 평균입니다.</p>
+        <div class="kx-chart dash-skeleton" id="trend-chart" data-source="courses kpi" style="min-height:270px"></div>
+      </div>
+      <div class="kx-card wide" id="card-period">
+        <h2>기간별 누적</h2>
+        <p class="kx-note">새 과정이 추가되면 해당 기간 행이 늘어납니다. 반기 단위로 같은 기준을 비교할 수 있습니다.</p>
+        <div class="kx-tablebox">
+          <table class="kx-table" id="period-table" data-source="by_period" data-row-key="period">
+            <thead><tr>
+              <th data-field="period">기간</th>
+              <th class="num" data-field="courses">과정 수</th>
+              <th class="num" data-field="participants">참가자</th>
+              <th class="num" data-field="respondents">응답자</th>
+              <th class="num" data-field="avg_index">평균 만족지수</th>
+              <th data-field="low_course">최저 과정</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 영역별 비교 ===== -->
+  <section id="areas" role="tabpanel" hidden>
+    <div class="kx-grid">
+      <div class="kx-card wide" id="card-dims">
+        <h2>9개 설문 영역의 누적 평균</h2>
+        <p class="kx-note">5점 척도. 큰 점은 전체 과정 평균, 작은 점은 과정 하나씩입니다. 빨간 점이 가장 약한 영역입니다.</p>
+        <div class="kx-chart dash-skeleton" id="dims-chart" data-source="dim_avg items" style="min-height:360px"></div>
+      </div>
+      <div class="kx-card wide" id="card-heat">
+        <h2>과정 × 영역 점수표</h2>
+        <p class="kx-note">각 칸은 문항 평균(5점). 전체 문항 평균보다 낮을수록 붉게, 높을수록 푸르게 칠했습니다. 칸에 마우스를 올리면 문항과 응답 분포가 보입니다.</p>
+        <div class="kx-chart" id="heat-wrap">
+          <div class="kx-scroll"><div class="kx-heat dash-skeleton" id="heat" data-source="items courses dim_avg course_item_avg kpi" style="min-height:300px"></div></div>
+          <div class="kx-legend"><span><i style="background:color-mix(in srgb, var(--cds-chart-status-critical) 45%, transparent)"></i>평균보다 낮음</span><span><i style="background:var(--color-bg);border:1px solid var(--color-border-line)"></i>평균 수준</span><span id="heat-hi-legend"><i></i>평균보다 높음</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 반복 이슈 ===== -->
+  <section id="issues" role="tabpanel" hidden>
+    <div class="kx-grid">
+      <div class="kx-card wide" id="card-matrix">
+        <h2>어떤 문제가 여러 과정에서 반복되는가</h2>
+        <p class="kx-note">과정별 주관식 의견을 문제 유형으로 묶었습니다(유형 분류는 Claude가 원문을 읽고 한 것). 점은 그 과정에서 해당 문제가 제기됐다는 뜻이고, 빨간 점은 '조치 필요' 등급입니다. 점에 마우스를 올리면 내용과 근거가 보입니다. 유형을 누르면 아래 목록이 그 유형만 보여줍니다.</p>
+        <div class="kx-chart">
+          <div class="kx-scroll"><div class="kx-mx dash-skeleton" id="matrix" data-source="theme_summary issue_levels courses" style="min-height:360px"></div></div>
+          <div class="kx-legend" id="matrix-legend"><span><i class="c" id="lg-acc"></i>제기됨</span><span><i class="c" style="background:var(--cds-chart-status-critical)"></i>조치 필요</span><span><i style="background:var(--cds-chart-muted);height:.5rem"></i>제기된 과정 수</span></div>
+        </div>
+      </div>
+      <div class="kx-card wide" id="card-issue-list">
+        <h2>이슈 목록</h2>
+        <p class="kx-note">등급은 규칙으로 정합니다. <b>조치 필요</b>: 관련 점수 4.0 미만이거나, 같은 과정의 이전 회차에서 나온 문제가 다시 나옴. <b>주의</b>: 앞서 다른 과정 2곳 이상에서 나온 유형이거나, 의견 2건 이상이거나, 관련 점수가 전체 평균보다 0.3점 이상 낮음. <b>참고</b>: 그 외.</p>
+        <div class="kx-tools">
+          <input class="kx-input" id="issue-search" type="search" placeholder="내용·과정 검색" aria-label="이슈 검색">
+          <button class="kx-chip" id="theme-picked" hidden></button>
+        </div>
+        <div class="kx-tablebox">
+          <table class="kx-table" id="issue-table" data-source="issue_levels" data-row-key="issue_id">
+            <thead><tr>
+              <th data-field="course">과정</th>
+              <th data-field="theme">유형</th>
+              <th data-field="level">등급</th>
+              <th data-field="text">내용</th>
+              <th data-field="reason" class="kx-hide-narrow">근거</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 강사 ===== -->
+  <section id="instructors" role="tabpanel" hidden>
+    <div class="kx-grid">
+      <div class="kx-card wide" id="card-inst">
+        <h2>강사별 평가</h2>
+        <p class="kx-note">5점 척도. 열 이름을 누르면 정렬됩니다. 4.0 미만은 ▼ 표시와 함께 붉게 보입니다.</p>
+        <div class="kx-tools"><input class="kx-input" id="inst-search" type="search" placeholder="강사·과정 검색" aria-label="강사 검색"></div>
+        <div class="kx-tablebox">
+          <table class="kx-table" id="inst-table" data-source="instructors" data-row-key="inst_id">
+            <thead><tr>
+              <th data-field="instructor"><button data-sort="instructor">강사</button></th>
+              <th data-field="course"><button data-sort="course">과정</button></th>
+              <th data-field="role" class="kx-hide-narrow"><button data-sort="role">분야</button></th>
+              <th data-field="overall" class="num"><button data-sort="overall">종합</button></th>
+              <th data-field="expertise" class="num kx-hide-narrow"><button data-sort="expertise">전문성</button></th>
+              <th data-field="clarity" class="num kx-hide-narrow"><button data-sort="clarity">전달력</button></th>
+              <th data-field="engagement" class="num kx-hide-narrow"><button data-sort="engagement">참여 유도</button></th>
+              <th data-field="materials" class="num kx-hide-narrow"><button data-sort="materials">교재·구성</button></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 과정 상세 ===== -->
+  <section id="detail" role="tabpanel" hidden>
+    <div class="kx-detailhead">
+      <select class="kx-select" id="course-select" aria-label="과정 선택" data-source="courses"></select>
+      <div class="kx-facts" id="detail-facts">
+        <span><span class="dmark" data-source="courses" data-field="category" data-fmt="text">—</span></span>
+        <span>교육일 <b><span class="dmark" data-source="courses" data-field="date" data-fmt="text">—</span></b></span>
+        <span>참가 <b><span class="dmark" data-source="courses" data-field="participants" data-fmt="int">—</span></b>명</span>
+        <span>응답 <b><span class="dmark" data-source="courses" data-field="respondents" data-fmt="int">—</span></b>명</span>
+        <span>종합 만족지수 <b><span class="dmark" data-source="courses" data-field="index10" data-fmt="f1">—</span></b> / 10</span>
+      </div>
+    </div>
+    <div class="kx-grid">
+      <div class="kx-card wide" id="card-summary">
+        <h2>분석 요약</h2>
+        <div class="kx-summary dash-skeleton" id="detail-summary" data-source="comments" style="min-height:4rem"></div>
+      </div>
+      <div class="kx-card" id="card-detail-items">
+        <h2>영역별 점수: 이 과정 vs 전체 평균</h2>
+        <p class="kx-note">5점 척도. 전체 평균보다 0.15점 이상 낮은 영역은 ▼로 표시합니다.</p>
+        <div class="kx-chart dash-skeleton" id="detail-items" data-source="items dim_avg" style="min-height:340px"></div>
+      </div>
+      <div class="kx-card" id="card-detail-size">
+        <h2>참여 기업 규모</h2>
+        <p class="kx-note">응답자 소속 기준, 명.</p>
+        <div class="kx-chart dash-skeleton" id="detail-size" data-source="company_size" style="min-height:200px"></div>
+      </div>
+      <div class="kx-card" id="card-detail-issues">
+        <h2>개선 이슈</h2>
+        <p class="kx-note">등급 기준은 '반복 이슈' 탭에 있습니다.</p>
+        <ul class="kx-list dash-skeleton" id="detail-issues" data-source="issue_levels" style="min-height:4rem"></ul>
+      </div>
+      <div class="kx-card" id="card-detail-strengths">
+        <h2>잘된 점</h2>
+        <ul class="kx-list dash-skeleton" id="detail-strengths" data-source="comments" style="min-height:4rem"></ul>
+      </div>
+      <div class="kx-card wide" id="card-detail-verbatim">
+        <h2>주관식 응답 원문</h2>
+        <ul class="kx-list dash-skeleton" id="detail-verbatim" data-source="comments" style="min-height:4rem"></ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ---------- calculations (shown to readers in Sources) ---------- */
+dash.calc('kpi', {
+  inputs: ['courses', 'items'],
+  title: '누적 핵심 지표',
+  description: '과정 수, 참가·응답자 합계(참가 인원이 비어 있는 과정은 참가 합계와 응답률에서 제외), 응답률(%), 과정별 전반적 만족도(10점)의 단순 평균(소수 첫째 자리), 최고·최저 과정, 전체 문항 평균(5점).',
+  fn: (courses, items) => {
+    const sum = (a, k) => a.reduce((s, r) => s + r[k], 0);
+    const best = courses.reduce((a, b) => (b.index10 > a.index10 ? b : a));
+    const worst = courses.reduce((a, b) => (b.index10 < a.index10 ? b : a));
+    const known = courses.filter((c) => c.participants != null);
+    const p = sum(known, 'participants'), r = sum(courses, 'respondents');
+    return [{
+      courses: courses.length, participants: p, respondents: r,
+      missing_participants: courses.length - known.length,
+      response_rate: known.length ? Math.round((sum(known, 'respondents') / p) * 100) : null,
+      avg_index: Math.round((sum(courses, 'index10') / courses.length) * 10) / 10,
+      best_course: best.short, best_index: best.index10,
+      worst_course: worst.short, worst_index: worst.index10,
+      item_avg: Math.round((sum(items, 'avg') / items.length) * 100) / 100,
+    }];
+  },
+});
+
+dash.calc('by_period', {
+  inputs: ['courses'],
+  title: '기간별 누적',
+  description: '반기별 과정 수, 참가·응답자 합계, 10점 지수 평균(소수 둘째 자리), 그 기간 최저 과정.',
+  fn: (courses) => {
+    const g = {};
+    for (const c of courses) (g[c.period] = g[c.period] || []).push(c);
+    return Object.keys(g).sort().map((period) => {
+      const cs = g[period];
+      return {
+        period, courses: cs.length,
+        participants: cs.some((c) => c.participants == null) ? null : cs.reduce((s, c) => s + c.participants, 0),
+        respondents: cs.reduce((s, c) => s + c.respondents, 0),
+        avg_index: Math.round((cs.reduce((s, c) => s + c.index10, 0) / cs.length) * 100) / 100,
+        low_course: cs.reduce((a, b) => (b.index10 < a.index10 ? b : a)).course,
+      };
+    });
+  },
+});
+
+dash.calc('dim_avg', {
+  inputs: ['items'],
+  title: '영역별 누적 평균',
+  description: '9개 설문 영역마다 과정별 평균의 단순 평균(소수 둘째 자리), 최저·최고 과정, 그 영역이 과정 내 최하위 문항이었던 과정 수.',
+  fn: (items) => {
+    const byCourse = {}, byDim = {};
+    for (const r of items) {
+      (byCourse[r.course_id] = byCourse[r.course_id] || []).push(r);
+      (byDim[r.dim_id] = byDim[r.dim_id] || []).push(r);
+    }
+    const lowest = new Set();
+    for (const rs of Object.values(byCourse)) {
+      const m = Math.min(...rs.map((r) => r.avg));
+      rs.filter((r) => r.avg === m).forEach((r) => lowest.add(r.course_id + '|' + r.dim_id));
+    }
+    return Object.values(byDim).map((rs) => {
+      const lo = rs.reduce((a, b) => (b.avg < a.avg ? b : a));
+      const hi = rs.reduce((a, b) => (b.avg > a.avg ? b : a));
+      return {
+        dim_id: rs[0].dim_id, dimension: rs[0].dimension, dim_order: rs[0].dim_order, area: rs[0].area,
+        avg: Math.round((rs.reduce((s, r) => s + r.avg, 0) / rs.length) * 100) / 100,
+        min_course: lo.course, min_avg: lo.avg, max_course: hi.course, max_avg: hi.avg,
+        lowest_in: rs.filter((r) => lowest.has(r.course_id + '|' + r.dim_id)).length,
+      };
+    });
+  },
+});
+
+dash.calc('course_item_avg', {
+  inputs: ['items'],
+  title: '과정별 문항 평균',
+  description: '과정마다 9개 문항 평균의 단순 평균(5점, 소수 둘째 자리).',
+  fn: (items) => {
+    const g = {};
+    for (const r of items) (g[r.course_id] = g[r.course_id] || []).push(r);
+    return Object.entries(g).map(([course_id, rs]) => ({
+      course_id, item_avg: Math.round((rs.reduce((s, r) => s + r.avg, 0) / rs.length) * 100) / 100,
+    }));
+  },
+});
+
+dash.calc('issue_levels', {
+  inputs: ['issues', 'items', 'instructors', 'courses'],
+  title: '이슈 등급 판정',
+  description: '조치 필요: 관련 점수 4.0 미만이거나, 같은 과정의 이전 회차에서 나온 문제가 다시 나옴. 주의: 다른 과정 2곳 이상에서 앞서 나온 유형, 의견 2건 이상, 또는 관련 점수가 전체 평균보다 0.3점 이상 낮음. 참고: 그 외.',
+  fn: (issues, items, instructors, courses) => {
+    const FIELD = { overall: '종합', expertise: '전문성', clarity: '전달력', engagement: '참여 유도', materials: '교재·구성' };
+    const start = Object.fromEntries(courses.map((c) => [c.course_id, c.start]));
+    const short = Object.fromEntries(courses.map((c) => [c.course_id, c.short]));
+    const program = Object.fromEntries(courses.map((c) => [c.course_id, c.program]));
+    const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
+    return issues.map((r) => {
+      let score = null, label = null, base = null;
+      if (r.ev_kind === 'dim') {
+        const it = items.find((i) => i.course_id === r.course_id && i.dim_id === r.ev_id);
+        if (it) { score = it.avg; label = it.dimension; }
+        base = mean(items.filter((i) => i.dim_id === r.ev_id).map((i) => i.avg));
+      } else if (r.ev_kind === 'inst') {
+        const pool = instructors.filter((i) => i.course_id === r.course_id && (r.ev_id === '*' || i.inst_id === r.ev_id));
+        const pick = pool.reduce((a, b) => (a && a[r.ev_field] <= b[r.ev_field] ? a : b), null);
+        if (pick) { score = pick[r.ev_field]; label = pick.instructor + ' ' + FIELD[r.ev_field]; }
+        base = mean(instructors.map((i) => i[r.ev_field]));
+      }
+      const same = issues.filter((x) => x.theme_id === r.theme_id && x.course_id !== r.course_id);
+      const prior = same.filter((x) => start[x.course_id] < start[r.course_id]).sort((a, b) => (start[a.course_id] < start[b.course_id] ? -1 : 1));
+      const rerun = prior.filter((x) => program[x.course_id] === program[r.course_id]);
+      const elsewhere = prior.filter((x) => program[x.course_id] !== program[r.course_id]);
+      const low = score != null && score < 4;
+      const gap = score != null && base != null && score <= base - 0.3;
+      const level = low || rerun.length ? '조치 필요' : elsewhere.length >= 2 || r.mentions >= 2 || gap ? '주의' : '참고';
+      const why = [];
+      if (rerun.length) why.push('이전 회차(' + rerun.map((x) => short[x.course_id]).join('·') + ')에 이어 재발');
+      if (elsewhere.length >= 2) why.push('앞서 ' + elsewhere.length + '개 과정에서 나온 유형');
+      if (low) why.push('관련 점수 4.0 미만');
+      if (gap) why.push('관련 점수가 평균보다 0.3점 이상 낮음');
+      if (r.mentions >= 2) why.push('의견 ' + r.mentions + '건');
+      return {
+        issue_id: r.issue_id, course_id: r.course_id, course: r.course, theme_id: r.theme_id, theme: r.theme, text: r.text,
+        mentions: r.mentions, level, level_rank: level === '조치 필요' ? 0 : level === '주의' ? 1 : 2,
+        score, score_label: label, base_mean: base == null ? null : Math.round(base * 100) / 100,
+        other_courses: new Set(same.map((x) => x.course_id)).size,
+        reason: why.length ? why.join(' · ') : '의견 1건',
+      };
+    });
+  },
+});
+
+dash.calc('theme_summary', {
+  inputs: ['issue_levels', 'courses'],
+  title: '이슈 유형별 반복도',
+  description: '이슈 유형마다 제기된 과정 수, 의견 수 합계, 조치 필요 건수. 과정 수가 많은 순.',
+  fn: (issue_levels, courses) => {
+    const issues = issue_levels;
+    const g = {};
+    for (const r of issues) (g[r.theme_id] = g[r.theme_id] || []).push(r);
+    return Object.values(g).map((rs) => ({
+      theme_id: rs[0].theme_id, theme: rs[0].theme,
+      courses: new Set(rs.map((r) => r.course_id)).size,
+      total_courses: courses.length,
+      mentions: rs.reduce((s, r) => s + (r.mentions || 0), 0),
+      high_risks: rs.filter((r) => r.level === '조치 필요').length,
+    })).sort((a, b) => b.courses - a.courses || b.mentions - a.mentions || b.high_risks - a.high_risks);
+  },
+});
+
+dash.calc('headline', {
+  inputs: ['dim_avg', 'theme_summary'],
+  title: '핵심 요약 문장',
+  description: '누적 평균이 가장 낮은 영역과, 가장 많은 과정에서 제기된 이슈 유형.',
+  fn: (dim_avg, theme_summary) => {
+    const lo = dim_avg.reduce((a, b) => (b.avg < a.avg ? b : a));
+    const top = theme_summary[0];
+    return [{
+      total_courses: top.total_courses, low_dim: lo.dimension, low_avg: lo.avg, low_in: lo.lowest_in,
+      top_theme: top.theme, top_courses: top.courses,
+    }];
+  },
+});
+</script>
+
+<script>
+(() => {
+  const root = document.getElementById('kx');
+  const f1 = d3.format('.1f'), f2 = d3.format('.2f'), fi = d3.format(',');
+  const D = (id) => dash.data(id);
+  const rowsOf = (id) => (D(id).status === 'ok' ? D(id).data : []);
+  const PAGES = ['overview', 'areas', 'issues', 'instructors', 'detail'];
+  let page = PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const lvClass = (l) => (l === '조치 필요' ? 'kx-lvl-high' : l === '주의' ? 'kx-lvl-warn' : 'kx-lvl-ref');
+  const evidence = (r) => {
+    const parts = [r.reason];
+    if (r.score != null) parts.push(r.score_label + ' ' + f2(r.score) + ' (전체 평균 ' + f2(r.base_mean) + ')');
+    if (r.other_courses) parts.push('다른 과정 ' + r.other_courses + '곳에서도 제기');
+    return '근거: ' + parts.join(' · ');
+  };
+  const fmt = (kind, v) => (v == null ? '—' : kind === 'int' ? fi(v) : kind === 'f1' ? f1(v) : kind === 'f2' ? f2(v) : String(v));
+
+  /* ---------- states ---------- */
+  function ready(box, ids) {
+    const st = ids.map((id) => D(id).status);
+    if (st.every((s) => s === 'ok')) { box.classList.remove('dash-skeleton'); return true; }
+    box.replaceChildren();
+    if (st.some((s) => s === 'loading')) { box.classList.add('dash-skeleton'); return false; }
+    box.classList.remove('dash-skeleton');
+    const f = el('div', 'kx-fail'); f.append(el('span', 'dot'), el('span', null, '불러오지 못함'));
+    box.append(f);
+    return false;
+  }
+  function fillMarks(scope) {
+    scope.querySelectorAll('[data-fmt]').forEach((m) => {
+      const d = D(m.dataset.source);
+      if (d.status !== 'ok') { m.textContent = '—'; m.classList.toggle('dash-skeleton', d.status === 'loading'); return; }
+      m.classList.remove('dash-skeleton');
+      let row;
+      if (m.dataset.where) {
+        const [k, v] = m.dataset.where.split('=');
+        row = d.data.find((r) => String(r[k]) === decodeURIComponent(v));
+      } else row = d.data[Number(m.dataset.row || 0)];
+      m.textContent = fmt(m.dataset.fmt, row ? row[m.dataset.field] : null);
+    });
+  }
+
+  /* ---------- tooltip ---------- */
+  function tipFor(box) {
+    let t = box.querySelector(':scope > .kx-tip');
+    if (!t) { t = el('div', 'kx-tip'); box.append(t); }
+    return {
+      show(event, title, lines) {
+        t.replaceChildren(el('div', 't', title), ...lines.map((l) => el('div', null, l)));
+        const [x, y] = d3.pointer(event, box);
+        t.style.opacity = 1;
+        const w = t.offsetWidth, bw = box.clientWidth;
+        let left = x + 14; if (left + w > bw) left = x - w - 14; if (left < 0) left = 0;
+        t.style.left = left + 'px'; t.style.top = Math.max(0, y - 12) + 'px';
+      },
+      hide() { t.style.opacity = 0; },
+    };
+  }
+
+  /* ---------- tabs ---------- */
+  function showPage(p, link) {
+    page = p;
+    for (const id of PAGES) {
+      document.getElementById(id).hidden = id !== p;
+      document.getElementById('tab-' + id).setAttribute('aria-selected', String(id === p));
+    }
+    if (link) dash.setLink(p);
+    draw();
+  }
+  root.querySelectorAll('.kx-tab').forEach((b) => b.addEventListener('click', () => showPage(b.dataset.page, true)));
+
+  /* ---------- overview ---------- */
+  function drawTrend() {
+    const box = document.getElementById('trend-chart');
+    if (!ready(box, ['courses', 'kpi'])) return;
+    const rows = rowsOf('courses').slice().sort((a, b) => (a.start < b.start ? -1 : 1));
+    const k = rowsOf('kpi')[0];
+    const W = Math.max(280, box.clientWidth), H = 270, m = { t: 30, r: 16, b: 50, l: 34 };
+    const x = d3.scalePoint(rows.map((r) => r.course_id), [m.l, W - m.r]).padding(0.45);
+    const lo = Math.min(7, d3.min(rows, (r) => r.index10) - 0.3);
+    const y = d3.scaleLinear([lo, 10], [H - m.b, m.t]);
+    const worst = d3.least(rows, (r) => r.index10);
+    const svg = d3.create('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', '과정별 종합 만족지수 추이');
+    const yt = y.ticks(4);
+    svg.append('g').selectAll('line').data(yt).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y).attr('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').selectAll('text').data(yt).join('text').attr('class', 'kx-tick').attr('x', m.l - 6).attr('y', y).attr('dy', '0.32em').attr('text-anchor', 'end').text(f1);
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(k.avg_index)).attr('y2', y(k.avg_index)).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 4');
+    svg.append('text').attr('class', 'kx-tick').attr('x', W - m.r).attr('y', y(k.avg_index) + 14).attr('text-anchor', 'end').text('누적 평균 ' + f1(k.avg_index));
+    svg.append('path').datum(rows).attr('fill', 'none').attr('stroke', dash.colors[0]).attr('stroke-width', 2).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round')
+      .attr('d', d3.line((r) => x(r.course_id), (r) => y(r.index10)));
+    svg.append('g').selectAll('circle').data(rows).join('circle').attr('cx', (r) => x(r.course_id)).attr('cy', (r) => y(r.index10)).attr('r', 5)
+      .attr('fill', (r) => (r === worst ? 'var(--cds-chart-status-critical)' : dash.colors[0])).attr('stroke', 'var(--color-panel)').attr('stroke-width', 2);
+    svg.append('g').selectAll('text').data(rows).join('text').attr('class', 'kx-lab').attr('x', (r) => x(r.course_id)).attr('y', (r) => y(r.index10) - 12).attr('text-anchor', 'middle').text((r) => f1(r.index10));
+    const narrow = x.step() < 74;
+    const lab = svg.append('g').selectAll('text').data(rows).join('text').attr('class', 'kx-tick').attr('text-anchor', 'middle').attr('x', (r) => x(r.course_id)).attr('y', H - m.b + 18);
+    lab.append('tspan').attr('x', (r) => x(r.course_id)).style('fill', 'var(--color-fg)').text((r) => r.short);
+    if (!narrow) lab.append('tspan').attr('x', (r) => x(r.course_id)).attr('dy', '1.3em').text((r) => r.date);
+    if (narrow) lab.attr('transform', (r, i) => (i % 2 ? `translate(0,16)` : null));
+    const tip = { show: (...a) => tipFor(box).show(...a), hide: () => tipFor(box).hide() };
+    svg.append('g').selectAll('circle').data(rows).join('circle').attr('cx', (r) => x(r.course_id)).attr('cy', (r) => y(r.index10)).attr('r', 18).attr('fill', 'transparent')
+      .on('mousemove', (e, r) => tip.show(e, r.date, [r.course, '종합 만족지수 ' + f1(r.index10) + ' / 10', '응답 ' + fi(r.respondents) + '명 / 참가 ' + (r.participants == null ? '미입력' : fi(r.participants) + '명')]))
+      .on('mouseleave', () => tip.hide());
+    box.replaceChildren(svg.node());
+  }
+
+  function drawPeriod() {
+    const tb = document.querySelector('#period-table tbody');
+    tb.replaceChildren(...rowsOf('by_period').map((r) => {
+      const tr = el('tr');
+      tr.append(el('td', null, r.period), el('td', 'num', fi(r.courses)), el('td', 'num', r.participants == null ? '미입력' : fi(r.participants)), el('td', 'num', fi(r.respondents)), el('td', 'num', f2(r.avg_index)), el('td', null, r.low_course));
+      return tr;
+    }));
+  }
+
+  /* ---------- areas ---------- */
+  function drawDims() {
+    const box = document.getElementById('dims-chart');
+    if (!ready(box, ['dim_avg', 'items'])) return;
+    const dims = rowsOf('dim_avg').slice().sort((a, b) => a.avg - b.avg);
+    const items = rowsOf('items');
+    const low = dims[0];
+    const W = Math.max(280, box.clientWidth), rowH = 36, m = { t: 8, r: 56, b: 28, l: 84 };
+    const H = m.t + m.b + dims.length * rowH;
+    const xmin = Math.min(3.8, d3.min(items, (r) => r.avg) - 0.1);
+    const x = d3.scaleLinear([xmin, 5], [m.l, W - m.r]);
+    const y = d3.scaleBand(dims.map((d) => d.dim_id), [m.t, H - m.b]).padding(0.2);
+    const svg = d3.create('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', '영역별 누적 평균');
+    const xt = x.ticks(W < 420 ? 3 : 6);
+    svg.append('g').selectAll('line').data(xt).join('line').attr('x1', x).attr('x2', x).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').selectAll('text').data(xt).join('text').attr('class', 'kx-tick').attr('x', x).attr('y', H - m.b + 18).attr('text-anchor', 'middle').text(f1);
+    const g = svg.append('g').selectAll('g').data(dims).join('g').attr('transform', (d) => `translate(0,${y(d.dim_id) + y.bandwidth() / 2})`);
+    g.append('text').attr('class', 'kx-lab').attr('x', m.l - 10).attr('dy', '0.32em').attr('text-anchor', 'end').text((d) => d.dimension);
+    g.append('line').attr('x1', (d) => x(d3.min(items.filter((r) => r.dim_id === d.dim_id), (r) => r.avg))).attr('x2', (d) => x(d3.max(items.filter((r) => r.dim_id === d.dim_id), (r) => r.avg)))
+      .attr('stroke', 'var(--cds-chart-muted)').attr('stroke-width', 2).attr('stroke-linecap', 'round');
+    g.selectAll('circle.c').data((d) => items.filter((r) => r.dim_id === d.dim_id)).join('circle').attr('class', 'c').attr('cx', (r) => x(r.avg)).attr('r', 3.5).attr('fill', 'var(--cds-chart-muted)');
+    g.append('circle').attr('cx', (d) => x(d.avg)).attr('r', 7).attr('fill', (d) => (d === low ? 'var(--cds-chart-status-critical)' : dash.colors[0])).attr('stroke', 'var(--color-panel)').attr('stroke-width', 2);
+    g.append('text').attr('class', 'kx-lab').attr('x', W - m.r + 10).attr('dy', '0.32em').text((d) => f2(d.avg));
+    const tip = { show: (...a) => tipFor(box).show(...a), hide: () => tipFor(box).hide() };
+    g.append('rect').attr('x', 0).attr('y', -rowH / 2).attr('width', W).attr('height', rowH).attr('fill', 'transparent')
+      .on('mousemove', (e, d) => tip.show(e, d.area, [d.dimension + ' 평균 ' + f2(d.avg), '최저: ' + d.min_course + ' ' + f2(d.min_avg), '최고: ' + d.max_course + ' ' + f2(d.max_avg), '과정 내 최하위 문항: ' + d.lowest_in + '개 과정']))
+      .on('mouseleave', () => tip.hide());
+    box.replaceChildren(svg.node());
+  }
+
+  function heatColor(v, mean) {
+    const d = v - mean, a = Math.min(1, Math.abs(d) / 0.45);
+    if (Math.abs(d) < 0.04) return 'var(--color-bg)';
+    const c = d < 0 ? 'var(--cds-chart-status-critical)' : dash.colors[0];
+    return `color-mix(in srgb, ${c} ${Math.round(8 + a * 47)}%, transparent)`;
+  }
+  function drawHeat() {
+    const box = document.getElementById('heat');
+    document.querySelector('#heat-hi-legend i').style.background = `color-mix(in srgb, ${dash.colors[0]} 45%, transparent)`;
+    if (!ready(box, ['items', 'courses', 'dim_avg', 'course_item_avg', 'kpi'])) return;
+    const courses = rowsOf('courses').slice().sort((a, b) => (a.start < b.start ? -1 : 1));
+    const dims = rowsOf('dim_avg').slice().sort((a, b) => a.dim_order - b.dim_order);
+    const items = rowsOf('items'), cav = rowsOf('course_item_avg'), mean = rowsOf('kpi')[0].item_avg;
+    box.style.gridTemplateColumns = `minmax(7.5rem,1.3fr) repeat(${dims.length}, minmax(4.2rem,1fr)) minmax(4.6rem,1fr)`;
+    const cells = [el('div', 'ch')];
+    dims.forEach((d) => cells.push(el('div', 'ch', d.dimension)));
+    cells.push(el('div', 'ch', '과정 평균'));
+    const tip = tipFor(box.parentElement.parentElement);
+    const cell = (v, cls, title, lines) => {
+      const c = el('div', cls, f2(v)); c.style.background = heatColor(v, mean);
+      c.addEventListener('mousemove', (e) => tip.show(e, title, lines)); c.addEventListener('mouseleave', () => tip.hide());
+      return c;
+    };
+    for (const c of courses) {
+      cells.push(el('div', 'rh', c.short));
+      for (const d of dims) {
+        const r = items.find((i) => i.course_id === c.course_id && i.dim_id === d.dim_id);
+        if (!r) { cells.push(el('div', null, '—')); continue; }
+        cells.push(cell(r.avg, null, c.course, [r.question, '평균 ' + f2(r.avg) + ' · 5점 ' + r.n5 + ' / 4점 ' + r.n4 + ' / 3점 ' + r.n3 + ' / 2점 ' + r.n2 + ' / 1점 ' + r.n1]));
+      }
+      const a = cav.find((x) => x.course_id === c.course_id);
+      cells.push(a ? cell(a.item_avg, 'avg', c.course, ['9개 문항 평균 ' + f2(a.item_avg)]) : el('div', null, '—'));
+    }
+    cells.push(el('div', 'rh avg sep', '전체 평균'));
+    dims.forEach((d) => cells.push(cell(d.avg, 'avg sep', d.dimension, ['과정 평균의 평균 ' + f2(d.avg), '최하위 문항이었던 과정 ' + d.lowest_in + '개'])));
+    cells.push(cell(mean, 'avg sep', '전체', ['모든 과정·문항 평균 ' + f2(mean)]));
+    box.replaceChildren(...cells);
+  }
+
+  /* ---------- issues ---------- */
+  function drawMatrix() {
+    const box = document.getElementById('matrix');
+    document.getElementById('lg-acc').style.background = dash.colors[0];
+    if (!ready(box, ['theme_summary', 'issue_levels', 'courses'])) return;
+    const themes = rowsOf('theme_summary'), issues = rowsOf('issue_levels');
+    const courses = rowsOf('courses').slice().sort((a, b) => (a.start < b.start ? -1 : 1));
+    const picked = dash.params().theme;
+    box.style.gridTemplateColumns = `minmax(10rem,1.6fr) repeat(${courses.length}, minmax(3.6rem,1fr)) minmax(7rem,1.2fr)`;
+    const cells = [el('div', 'ch')];
+    courses.forEach((c) => cells.push(el('div', 'ch', c.short)));
+    cells.push(el('div', 'ch', '제기된 과정'));
+    const tip = tipFor(box.parentElement.parentElement);
+    for (const t of themes) {
+      const h = el('div', 'rh', t.theme);
+      h.setAttribute('role', 'button'); h.tabIndex = 0;
+      if (picked === t.theme_id) h.style.fontWeight = '600';
+      const pick = () => { dash.setParams({ theme: t.theme_id }); document.getElementById('card-issue-list').scrollIntoView({ block: 'start' }); };
+      h.addEventListener('click', pick); h.addEventListener('keydown', (e) => { if (e.key === 'Enter') pick(); });
+      cells.push(h);
+      for (const c of courses) {
+        const rs = issues.filter((r) => r.theme_id === t.theme_id && r.course_id === c.course_id);
+        const cdiv = el('div');
+        if (rs.length) {
+          const size = 12;
+          const dot = el('span', 'kx-dot'); dot.style.width = dot.style.height = size + 'px';
+          dot.style.background = rs.some((r) => r.level === '조치 필요') ? 'var(--cds-chart-status-critical)' : dash.colors[0];
+          cdiv.append(dot);
+          cdiv.addEventListener('mousemove', (e) => tip.show(e, c.course + ' · ' + t.theme, rs.flatMap((r) => ['[' + r.level + '] ' + r.text, '근거: ' + r.reason])));
+          cdiv.addEventListener('mouseleave', () => tip.hide());
+        }
+        cells.push(cdiv);
+      }
+      const ct = el('div', 'ct');
+      const bar = el('span', 'kx-bar' + (t === themes[0] ? ' hot' : '')); bar.style.width = (t.courses / t.total_courses) * 4.5 + 'rem';
+      ct.append(bar, el('span', null, t.courses + ' / ' + t.total_courses));
+      cells.push(ct);
+    }
+    box.replaceChildren(...cells);
+  }
+
+  const issueSearch = document.getElementById('issue-search');
+  issueSearch.addEventListener('input', () => drawIssueTable());
+  const pickedBtn = document.getElementById('theme-picked');
+  pickedBtn.addEventListener('click', () => dash.setParams({ theme: null }));
+  function drawIssueTable() {
+    const theme = dash.params().theme;
+    const all = rowsOf('issue_levels');
+    const t = all.find((r) => r.theme_id === theme);
+    pickedBtn.hidden = !t; pickedBtn.textContent = t ? t.theme + ' ×' : '';
+    const q = issueSearch.value.trim().toLowerCase();
+    const rows = all.filter((r) => (!t || r.theme_id === theme) && (!q || (r.text + r.course + r.theme).toLowerCase().includes(q)))
+      .slice().sort((a, b) => a.level_rank - b.level_rank || b.other_courses - a.other_courses);
+    document.querySelector('#issue-table tbody').replaceChildren(...rows.map((r) => {
+      const tr = el('tr'); tr.dataset.key = r.issue_id;
+      const lv = el('td', lvClass(r.level), r.level);
+      lv.style.whiteSpace = 'nowrap';
+      tr.append(el('td', null, r.course), el('td', null, r.theme), lv, el('td', null, r.text), el('td', 'kx-hide-narrow kx-why', evidence(r)));
+      return tr;
+    }));
+  }
+
+  /* ---------- instructors ---------- */
+  let sortKey = 'overall', sortDir = -1;
+  document.querySelectorAll('#inst-table th button').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.sort; if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = ['instructor', 'course', 'role'].includes(k) ? 1 : -1; }
+    drawInst();
+  }));
+  const instSearch = document.getElementById('inst-search');
+  instSearch.addEventListener('input', () => drawInst());
+  function drawInst() {
+    document.querySelectorAll('#inst-table th').forEach((th) => {
+      const b = th.querySelector('button');
+      th.setAttribute('aria-sort', b && b.dataset.sort === sortKey ? (sortDir > 0 ? 'ascending' : 'descending') : 'none');
+    });
+    const q = instSearch.value.trim().toLowerCase();
+    const rows = rowsOf('instructors').filter((r) => !q || (r.instructor + r.course + r.role).toLowerCase().includes(q)).slice()
+      .sort((a, b) => { const x = a[sortKey], y = b[sortKey]; return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'ko')) * sortDir; });
+    const num = (v, cls) => el('td', 'num ' + (cls || '') + (v < 4 ? ' low' : ''), f2(v));
+    document.querySelector('#inst-table tbody').replaceChildren(...rows.map((r) => {
+      const tr = el('tr'); tr.dataset.key = r.inst_id;
+      const ov = el('td', 'num' + (r.overall < 4 ? ' low' : ''));
+      const wrap = el('span', 'kx-cellbar'); const b = el('span', 'b'); b.style.width = (r.overall / 5) * 4 + 'rem';
+      if (r.overall < 4) b.style.background = 'var(--cds-chart-status-critical)';
+      wrap.append(b, el('span', null, f2(r.overall))); ov.append(wrap);
+      tr.append(el('td', null, r.instructor), el('td', null, r.course), el('td', 'kx-hide-narrow', r.role), ov,
+        num(r.expertise, 'kx-hide-narrow'), num(r.clarity, 'kx-hide-narrow'), num(r.engagement, 'kx-hide-narrow'), num(r.materials, 'kx-hide-narrow'));
+      return tr;
+    }));
+  }
+
+  /* ---------- detail ---------- */
+  const sel = document.getElementById('course-select');
+  sel.addEventListener('change', () => dash.setParams({ course: sel.value }));
+  function currentCourse() {
+    const cs = rowsOf('courses');
+    const p = dash.params().course;
+    if (cs.some((c) => c.course_id === p)) return p;
+    const latest = cs.slice().sort((a, b) => (a.start < b.start ? 1 : -1))[0];
+    return latest ? latest.course_id : null;
+  }
+  function drawDetail() {
+    const cs = rowsOf('courses').slice().sort((a, b) => (a.start < b.start ? 1 : -1));
+    const cid = currentCourse();
+    sel.replaceChildren(...cs.map((c) => new Option(c.course + ' (' + c.date + ')', c.course_id)));
+    if (cid) sel.value = cid;
+    document.querySelectorAll('#detail-facts .dmark').forEach((m) => { if (cid) m.dataset.where = 'course_id=' + encodeURIComponent(cid); });
+    fillMarks(document.getElementById('detail-facts'));
+
+    // summary
+    const sbox = document.getElementById('detail-summary');
+    if (ready(sbox, ['comments'])) {
+      const cm = rowsOf('comments').filter((r) => r.course_id === cid);
+      sbox.replaceChildren(...cm.filter((r) => r.kind === '요약').sort((a, b) => a.seq - b.seq).map((r) => el('p', null, r.text)));
+      const st = document.getElementById('detail-strengths'); st.classList.remove('dash-skeleton');
+      st.replaceChildren(...cm.filter((r) => r.kind === '강점').sort((a, b) => a.seq - b.seq).map((r) => el('li', null, r.text)));
+      const vb = document.getElementById('detail-verbatim'); vb.classList.remove('dash-skeleton');
+      vb.replaceChildren(...cm.filter((r) => r.kind === '원문').sort((a, b) => a.seq - b.seq).map((r) => el('li', 'kx-quote', '“' + r.text.replace(/^-\s*/, '') + '”')));
+    } else { ready(document.getElementById('detail-strengths'), ['comments']); ready(document.getElementById('detail-verbatim'), ['comments']); }
+
+    // issues
+    const ibox = document.getElementById('detail-issues');
+    if (ready(ibox, ['issue_levels'])) {
+      const rs = rowsOf('issue_levels').filter((r) => r.course_id === cid).sort((a, b) => a.level_rank - b.level_rank);
+      ibox.replaceChildren(...rs.map((r) => {
+        const li = el('li', 'kx-issue');
+        const top = el('div', 'kx-issue-top');
+        const badge = el('span', 'kx-badge ' + lvClass(r.level), r.level);
+        top.append(badge, el('span', 'kx-issue-theme', r.theme));
+        li.append(top, el('div', null, r.text), el('div', 'kx-why', evidence(r)));
+        return li;
+      }));
+      if (!rs.length) ibox.replaceChildren(el('li', 'kx-why', '제기된 개선 이슈가 없습니다.'));
+    }
+
+    // items vs average
+    const box = document.getElementById('detail-items');
+    if (ready(box, ['items', 'dim_avg'])) {
+      const dims = rowsOf('dim_avg').slice().sort((a, b) => a.dim_order - b.dim_order);
+      const mine = rowsOf('items').filter((r) => r.course_id === cid);
+      const W = Math.max(260, box.clientWidth), rowH = 32, m = { t: 8, r: 64, b: 26, l: 78 };
+      const H = m.t + m.b + dims.length * rowH;
+      const xmin = Math.min(3.8, (d3.min(mine, (r) => r.avg) ?? 4) - 0.1);
+      const x = d3.scaleLinear([xmin, 5], [m.l, W - m.r]);
+      const y = d3.scaleBand(dims.map((d) => d.dim_id), [m.t, H - m.b]).padding(0.2);
+      const svg = d3.create('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', '이 과정과 전체 평균의 영역별 점수');
+      const xt = x.ticks(W < 380 ? 3 : 5);
+      svg.append('g').selectAll('line').data(xt).join('line').attr('x1', x).attr('x2', x).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', 'var(--cds-chart-grid)');
+      svg.append('g').selectAll('text').data(xt).join('text').attr('class', 'kx-tick').attr('x', x).attr('y', H - m.b + 17).attr('text-anchor', 'middle').text(f1);
+      const tip = { show: (...a) => tipFor(box).show(...a), hide: () => tipFor(box).hide() };
+      dims.forEach((d) => {
+        const r = mine.find((i) => i.dim_id === d.dim_id); if (!r) return;
+        const cy = y(d.dim_id) + y.bandwidth() / 2;
+        const g = svg.append('g').attr('transform', `translate(0,${cy})`);
+        g.append('text').attr('class', 'kx-lab').attr('x', m.l - 10).attr('dy', '0.32em').attr('text-anchor', 'end').text(d.dimension);
+        g.append('line').attr('x1', x(Math.min(r.avg, d.avg))).attr('x2', x(Math.max(r.avg, d.avg))).attr('stroke', 'var(--cds-chart-muted)').attr('stroke-width', 2);
+        g.append('circle').attr('cx', x(d.avg)).attr('r', 5).attr('fill', 'var(--color-panel)').attr('stroke', 'var(--color-fg-muted)').attr('stroke-width', 1.5);
+        g.append('circle').attr('cx', x(r.avg)).attr('r', 6).attr('fill', dash.colors[0]).attr('stroke', 'var(--color-panel)').attr('stroke-width', 2);
+        const below = r.avg <= d.avg - 0.15;
+        g.append('text').attr('class', 'kx-lab').attr('x', W - m.r + 8).attr('dy', '0.32em').style('fill', below ? 'var(--color-bad)' : null).text((below ? '▼ ' : '') + f2(r.avg));
+        g.append('rect').attr('x', 0).attr('y', -rowH / 2).attr('width', W).attr('height', rowH).attr('fill', 'transparent')
+          .on('mousemove', (e) => tip.show(e, d.dimension, [r.question, '이 과정 ' + f2(r.avg) + ' · 전체 평균 ' + f2(d.avg)]))
+          .on('mouseleave', () => tip.hide());
+      });
+      const leg = el('div', 'kx-legend');
+      const a = el('span'); const ai = el('i', 'c'); ai.style.background = dash.colors[0]; a.append(ai, document.createTextNode('이 과정'));
+      const b = el('span'); const bi = el('i', 'c'); bi.style.border = '1.5px solid var(--color-fg-muted)'; b.append(bi, document.createTextNode('전체 과정 평균'));
+      leg.append(a, b);
+      box.replaceChildren(svg.node(), leg);
+    }
+
+    // company size
+    const zbox = document.getElementById('detail-size');
+    if (ready(zbox, ['company_size'])) {
+      const rs = rowsOf('company_size').filter((r) => r.course_id === cid && r.count > 0).sort((a, b) => b.count - a.count);
+      if (!rs.length) { zbox.style.minHeight = ''; zbox.replaceChildren(el('p', 'kx-note', '이 과정 설문에는 기업 규모 문항이 없습니다.')); return; }
+      const W = Math.max(240, zbox.clientWidth), rowH = 30, m = { t: 4, r: 40, b: 4, l: 64 };
+      const H = Math.max(rowH, m.t + m.b + rs.length * rowH);
+      const x = d3.scaleLinear([0, d3.max(rs, (r) => r.count) || 1], [m.l, W - m.r]);
+      const y = d3.scaleBand(rs.map((r) => r.size), [m.t, H - m.b]).padding(0.3);
+      const svg = d3.create('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', '참여 기업 규모');
+      const g = svg.append('g').selectAll('g').data(rs).join('g').attr('transform', (r) => `translate(0,${y(r.size)})`);
+      g.append('text').attr('class', 'kx-lab').attr('x', m.l - 10).attr('y', y.bandwidth() / 2).attr('dy', '0.32em').attr('text-anchor', 'end').text((r) => r.size);
+      g.append('rect').attr('x', m.l).attr('width', (r) => Math.max(2, x(r.count) - m.l)).attr('height', Math.min(18, y.bandwidth())).attr('rx', 4).attr('fill', dash.colors[0]);
+      g.append('text').attr('class', 'kx-lab').attr('x', (r) => x(r.count) + 6).attr('y', Math.min(18, y.bandwidth()) / 2).attr('dy', '0.32em').text((r) => fi(r.count));
+      zbox.style.minHeight = H + 'px';
+      zbox.replaceChildren(svg.node());
+    }
+  }
+
+  /* ---------- draw ---------- */
+  function draw() {
+    const k0 = rowsOf('kpi')[0];
+    document.getElementById('kpi-missing').textContent = k0 && k0.missing_participants ? ' (' + k0.missing_participants + '개 과정 미입력)' : '';
+    fillMarks(document.querySelector('.kx-head'));
+    fillMarks(document.getElementById('overview'));
+    if (page === 'overview') { drawTrend(); drawPeriod(); }
+    if (page === 'areas') { drawDims(); drawHeat(); }
+    if (page === 'issues') { drawMatrix(); drawIssueTable(); }
+    if (page === 'instructors') drawInst();
+    if (page === 'detail') drawDetail();
+  }
+  dash.onData(draw);
+  showPage(page, false);
+})();
+</script>
+</div>
+<footer class="site-foot">데이터: 2026 aSSIST-KOTRA아카데미 교육과정 만족도 평가 취합본 10개 과정(일본·인도네시아는 Typeform 응답과 대조). 문제 유형 분류와 요약 문장은 Claude가 설문 원문을 바탕으로 작성했습니다.</footer>
+</body>
+</html>
